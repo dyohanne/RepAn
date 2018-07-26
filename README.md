@@ -15,5 +15,5 @@ RepAn also implements basic functions for descriptive function for the analysis 
 - repertoire overlap analysis
 - repertoire diversity analysis
 
-
+RepAn for now accepts only [immunoseq](https://www.adaptivebiotech.com/immunoseq) format datasets.
 
