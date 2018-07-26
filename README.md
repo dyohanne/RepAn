@@ -54,7 +54,7 @@ enriched <- results[[1]][results[[1]]$permutedEnPval < 0.05,]
 Significantly differentially de-enriched CDR3s (with permuted p-values < 0.05), that have shown significant clonal contraction in condition 2, can be accessed from the result using :
 
 ```
-de-enriched <- results[[1]][results[[1]]permutedDeEnPval < 0.05,]
+de-enriched <- results[[1]][results[[1]]$permutedDeEnPval < 0.05,]
 ```
 
 
