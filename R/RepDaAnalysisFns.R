@@ -2024,7 +2024,7 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
 #' @return a data frame with all candidate DA CDR3s if returnAll is false, a list with data frame of candidate DA CDR3s and all intermediate results if returnAll is true.
 #' @export
 # 
-runDaAnaysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod=c("euclidean","cosine"),useDynamicTreeCut=T,matchingMethod="km",repeatResample=T,nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000){
+runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod=c("euclidean","cosine"),useDynamicTreeCut=T,matchingMethod="km",repeatResample=T,nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000){
   
   clusterby <- toupper(clusterby)
   if(!clusterby %in% c("NT","AA"))

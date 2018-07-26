@@ -1,10 +1,35 @@
 Package: RepAn
 Type: Package
-Title: What the package does (short line)
-Version: 1.0
+Title: Differential abundance Analysis for deep sequenced immune repertoire (Repseq) datasets
+Version: 0.1.1
 Date: 2018-07-26
-Author: Who wrote it
-Maintainer: Who to complain to <yourfault@somewhere.net>
-Description: More about what it does (maybe more than one line)
-License: What license is it under?
+Author: Dawit A. Yohannes 
+Maintainer: Dawit A. Yohannes <dawit.yohannes@helsinki.fi>
+Description: RepAn mainly performs differential abundance analysis by comparing immune repertoire
+samples in two conditon groups to find condition associated CDR3 sequences. It conducts the comparison between sample groups 
+at population level at the level of sub-repertoires, which are clusters of CDR3s that have shared immuno-genomic features across samples. 
+RepAn also implements basic analysis functions for immune repertoire datasets.
+License: GPL-3
+Depends:
+    R (>= 2.15.1)
+Imports:
+    ggplot2 (>= 1.0.0),
+    stringr (>=1.1.0),
+    cluster (>=2.0.5),
+    Biostrings (>=2.38.4),
+    RankProd (>=2.42.0),
+    doParallel (>=1.0.10),
+    preprocessCore (>=1.32.0),
+    randomForest (>=4.6-12),
+    Matrix (>=1.2-7.1),
+    gplots (>=3.0.1),
+    wordspace (>=0.2-0),
+    e1071 (>=1.6-7),
+    data.table (>=1.9.6),
+    gplots (>=3.0.1),
+    kmer (>=1.0.2),
+    dendextend (>=1.3.0),
+    ape (>=5.1),
+    ggseqlogo (>=0.1),
+    permute (>=0.9-4)
 RoxygenNote: 5.0.1
