@@ -2259,7 +2259,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
 #' @param pValueCutoff the cutoff p-value, default is 0.05
 #' @return function returns a data frame of the candidate CDR3s that have significant p-value, that is below the pValueCutoff
 #' 
-#' @example TopDAClonotypes(results,enriched=T,pValueCutoff=T) # results is an object holding the result of running runDaAnalysis
+#' @example TopDAClonotypes(results,enriched=T,pValueCutoff=0.05) # results is an object holding the result of running runDaAnalysis
 #' 
 #' @export
 #' 

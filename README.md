@@ -48,13 +48,13 @@ results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcu
 Significantly differentially enriched CDR3s (with permuted p-values < 0.05), that have shown significant clonal expansion in condition 2, can be accessed from the result using :
 
 ```
-enriched <- results[[1]][results[[1]]$permutedEnPval < 0.05,]
+enrichedCDR3s <- TopDAClonotypes(results,enriched=T,pValueCutoff=0.05)
 ```
 
 Significantly differentially de-enriched CDR3s (with permuted p-values < 0.05), that have shown significant clonal contraction in condition 2, can be accessed from the result using :
 
 ```
-de-enriched <- results[[1]][results[[1]]$permutedDeEnPval < 0.05,]
+de-enrichedCDR3s <- TopDAClonotypes(results,enriched=F,pValueCutoff=0.05)
 ```
 
 
