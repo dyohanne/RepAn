@@ -2088,8 +2088,8 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   if(length(allCandidateClones) > 0 ){
     
-    allnRepeats <- length(cDaClonotypesList[[2]])
-    nRepeatsWithHits <- length(cDaClonotypesList[[2]]) - length(is.null(cDaClonotypesList[[2]]))
+    allnRepeats <- length(cDaClonotypesList)
+    nRepeatsWithHits <- length(cDaClonotypesList) - length(is.null(cDaClonotypesList))
     
     cat("Number of candidate CDR3 clonotypes detected as differentially abundant before filtering: ",length(allCandidateClones),"\n\t Candidate DA CDR3s detected from ",nRepeatsWithHits,"out of",allnRepeats,"repeat resamples.\n")
   }else{
@@ -2265,8 +2265,12 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
 #' 
 TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05){
  
-  if(is.data.frame(candidateList) & nrow(candidateList) > 0){
-    candidateCDR3s <- candidateList
+  if(is.data.frame(candidateList)){
+     if(nrow(candidateList) > 0){
+      candidateCDR3s <- candidateList
+     }else{
+       stop("The list does not contain any candidate CDR3s.")
+     }
   }else if(nrow(candidateList[[1]]) > 0){
     candidateCDR3s <- candidateList[[1]]
   }else{
