@@ -33,3 +33,5 @@ Imports:
     ggseqlogo (>= 0.1),
     permute (>= 0.9-4)
 RoxygenNote: 6.1.0
+Encoding: UTF-8
+
