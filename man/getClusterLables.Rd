@@ -16,4 +16,3 @@ a list containing the clonotypes,clonotypes with 4-mer usage frequencies,distanc
 \description{
 This function performs pairwise 4-mer nt usage clustering of clonotypes in repSeq data
 }
-

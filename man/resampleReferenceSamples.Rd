@@ -24,4 +24,3 @@ repSeq data object created by downsampling after pooling all datasets
 \description{
 Pool and resample samples to create reference/background repertoires, normalize samples to equal number of sequence reads
 }
-

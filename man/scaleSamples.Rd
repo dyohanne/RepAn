@@ -24,4 +24,3 @@ repSeq data Object containing normalized repertoire data after resampling
 \description{
 scale all samples to equal number of sequence reads
 }
-

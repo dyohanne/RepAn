@@ -678,6 +678,13 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
 }
 
 
+#' Count kmer frequencies in a CDR3
+#' 
+#' @param seqs a vector of all CDR3 sequences
+#' @param type the type of kmers, NT or AA
+#' @param k the size of k, default is 4
+#' @return data frame of sequences versus kmer counts
+
 CountkmerFrequency <- function(seqs,type="NT",k=4){
   
   DNAletters=c("A","C","G","T")
@@ -708,6 +715,13 @@ CountkmerFrequency <- function(seqs,type="NT",k=4){
 }
 
 
+#' Count kmer frequencies in a CDR3
+#' 
+#' @param seqs a vector of all CDR3 sequences
+#' @param type the type of kmers, NT or AA
+#' @param k the size of k, default is 4
+#' @param normForLength normalize the kmer frequencies by the length of the CDR3, default is False
+#' @return a sparse matrix of sequences versus kmer counts
 getKmerFrequency <- function(seqs,type="NT",k=4,normForLength=F){
   
   if(type=="NT"){

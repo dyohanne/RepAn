@@ -19,4 +19,3 @@ a repSeq object which is a list containing the raw data (normalized to 1e6 in al
 \description{
 Setup repseq object for differential abudance analysis, CDR3 counts are changed to counts per million for all samples
 }
-

@@ -19,4 +19,3 @@ a repSeq object with the new item added to its list of members.
 \description{
 Adds new item to a repseq object
 }
-

@@ -17,4 +17,3 @@ true if the item exists in object, false if item does not exist in object
 \description{
 check if item exists in repseq object
 }
-

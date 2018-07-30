@@ -21,4 +21,3 @@ returns an optimal k for dividing unsupervised clustering results into k compact
 \description{
 Finds optimal k as the average optimal k detected from the within sample clustering of selected repertoire samples.
 }
-

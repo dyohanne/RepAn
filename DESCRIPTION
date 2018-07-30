@@ -32,4 +32,4 @@ Imports:
     ape (>= 5.1),
     ggseqlogo (>= 0.1),
     permute (>= 0.9-4)
-RoxygenNote: 5.0.1
+RoxygenNote: 6.1.0

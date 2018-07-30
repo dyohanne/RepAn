@@ -21,4 +21,3 @@ returns a vector of CDR3 sequences with size nClones that is randomly sampled fr
 \description{
 Pool and resample samples to create reference/background repertoires and return only CDR3s, normalizes samples to equal number of sequence reads
 }
-

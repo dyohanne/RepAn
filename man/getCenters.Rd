@@ -17,4 +17,3 @@ a matrix with rows containing the cluster labels and columns containing an avera
 \description{
 This function calculates cluster centroids given sequences (rows) and k-mer usage (columns), and cluster assignment labels for each sequence. Centroid vector for each cluster is the average of the k-mer usage frequencies of clonotypes in the cluster.
 }
-
