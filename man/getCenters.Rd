@@ -2,7 +2,7 @@
 % Please edit documentation in R/RepDaAnalysisFns.R
 \name{getCenters}
 \alias{getCenters}
-\title{This function calculates cluster centroids given sequences (rows) and k-mer usage (columns), and cluster assignment labels for each sequence. Centroid vector for each cluster is the average of the k-mer usage frequencies of clonotypes in the cluster.}
+\title{Compute cluster centroids}
 \usage{
 getCenters(seqmers, clslabels)
 }

@@ -8,98 +8,6 @@
 ### ***************************************************************
 
 
-# data file 
-#source("RepData.R")
-
-
-# # Including data reading and analysis funtions
-# source("TcrAnalysisFunctions.R")
-# 
-# 
-# # Repseq sample parsing and loading funcions. NOT DONE YET ..............................................
-# 
-# # T1D repertoires, default reading is for productive clones only
-# 
-# D1 <- readSample("data/T1D/2270.tsv")
-# D2 <- readSample("data/T1D/2279.tsv")
-# D3 <- readSample("data/T1D/2298.tsv")
-# D4 <- readSample("data/T1D/2315.tsv")
-# 
-# 
-# # T = treated sample
-# D1T <- readSample("data/T1D/2290.tsv")
-# D2T <- readSample("data/T1D/2293.tsv")
-# D3T <- readSample("data/T1D/2313.tsv")
-# D4T <- readSample("data/T1D/2323.tsv")
-# 
-# 
-# #samNames
-# 
-# samNames <- c("D1","D2","D3","D4","D1T","D2T","D3T","D4T")
-# 
-# 
-# # Samples list (should be re-written to parse a folder)
-# 
-# repSeqObj <- list(sampleData = list(D1,D2,D3,D4,D1T,D2T,D3T,D4T),
-#                samNames = samNames,
-#                group = NULL)
-#                
-# names(repSeqObj$sampleData) <- samNames
-# repSeqObj$group <- c(0,0,0,0,1,1,1,1)
-# 
-# 
-# 
-# # our PBMC data
-# cd1=readSample("data/PBMC/CD005d0W.tsv")
-# cd1T=readSample("data/PBMC/CD005d6W.tsv")
-# cd2=readSample("data/PBMC/CD006d0W.tsv")
-# cd2T=readSample("data/PBMC/CD006d6W.tsv")
-# 
-# cd3=readSample("data/PBMC/CD011d0W.tsv")
-# cd3T=readSample("data/PBMC/CD011d6W.tsv")
-# cd4=readSample("data/PBMC/CD039d0W.tsv")
-# cd4T=readSample("data/PBMC/CD039d6W.tsv")
-# 
-# 
-# 
-# #which(cd1$AMINOACID == "CASSLRSTDTQYF")
-# 
-# 
-# #samNames
-# 
-# samNames=c("cd1","cd2","cd3","cd4","cd1T","cd2T","cd3T","cd4T")
-# 
-# 
-# # Samples list (should be re-written to parse a folder)
-# 
-# repSeqObj <- list(sampleData = list(cd1,cd2,cd3,cd4,cd1T,cd2T,cd3T,cd4T),
-#                samNames = samNames,
-#                group = NULL)
-# 
-# names(repSeqObj$sampleData) <- samNames
-# repSeqObj$group <- c(0,0,0,0,1,1,1,1)
-# 
-# 
-# 
-# # Smaller samples 
-# #samNames
-# 
-# samNames=c("cd1","cd2","cd1T","cd2T")
-# 
-# 
-# # Samples list (should be re-written to parse a folder)
-# 
-# repSeqObj <- list(sampleData = list(cd1,cd2,cd1T,cd2T),
-#                samNames = samNames,
-#                group = NULL)
-# 
-# names(repSeqObj$sampleData) <- samNames
-# repSeqObj$group <- c(0,0,1,1)
-# 
-# 
-
-
-
 # General utility functions ....................................................................
 
 
@@ -561,7 +469,8 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
 }
 
 
-
+#' Compute cluster centroids
+#' 
 #' This function calculates cluster centroids given sequences (rows) and k-mer usage (columns), and cluster assignment labels for each sequence. Centroid vector for each cluster is the average of the k-mer usage frequencies of clonotypes in the cluster.
 #' 
 #' @param seqmers is a dataframe/matrix with observations (sequences) on the rows and features (k-mer usage frequences) on the columns
@@ -590,9 +499,9 @@ getCenters <- function(seqmers,clslabels){
   
 }
 
-
-
-# Finds optimal k as the average optimal k detected from the within sample clustering of selected repertoire samples.
+#' Finding optimal number of clusters
+#' 
+#' Finds optimal k as the average optimal k detected from the within sample clustering of selected repertoire samples.
 #' 
 #' @param repSeqObj is an object containing all repertoire sample data
 #' @param distMethod the distance method used for determining distance between CDR3 feature vectors, default "euclidean"
@@ -2001,6 +1910,7 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
 # Run DA analysis function :  .........................................................................
 
 #' This function performs differential abundance analysis between groups of TCRB CDR3 samples (repseq data) to identify differentially abundant (DA) CDR3s. 
+#' 
 #' @description Function performs clustering based differential abundance analysis of CDR3 sequences in two sample groups with repeat resampling strategy. It first
 #' performs within sample unsupervised clustering using subsequence frequency based unsupervised clustering, matches the clusters to their closest match across samples, and performs differential abundance testing at the level of matching
 #' clusters to identify differentially abundant condition associated CDR3 sequences
@@ -2022,6 +1932,7 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
 #' If false, the intermediate results fro all runs are not returned, only a data frame with candidate differentially abundant CDR3s and their filterig results is returned.
 #' @param nRR the number of permutations to perform in the ranking step of candidate DA CDR3s to determine statistical significance.
 #' @return a data frame with all candidate DA CDR3s if returnAll is false, a list with data frame of candidate DA CDR3s and all intermediate results if returnAll is true.
+#' 
 #' @export
 # 
 runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod=c("euclidean","cosine"),useDynamicTreeCut=T,matchingMethod="km",repeatResample=T,nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000){

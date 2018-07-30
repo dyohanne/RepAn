@@ -2,6 +2,7 @@
 % Please edit documentation in R/RepDaAnalysisFns.R
 \name{findOptimalK}
 \alias{findOptimalK}
+\title{Finding optimal number of clusters}
 \usage{
 findOptimalK(repSeqObj, nSamEval = 2, clusterby, minCSizePerc = 0.1,
   minNClonesPerCluster = 20, kmerWidth = 4, posWt = T,
@@ -16,5 +17,8 @@ findOptimalK(repSeqObj, nSamEval = 2, clusterby, minCSizePerc = 0.1,
 }
 \value{
 returns an optimal k for dividing unsupervised clustering results into k compact clusters.
+}
+\description{
+Finds optimal k as the average optimal k detected from the within sample clustering of selected repertoire samples.
 }
 
