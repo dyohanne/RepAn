@@ -1688,7 +1688,10 @@ extractDASubRepertoire <- function(repSeqObj,cutoff=0.1,method="pvalue"){
   # both enrichment and de-enrichment
   significantSubRepertoires = rownames(repSeqObj$cDaResult)[which(repSeqObj$cDaResult[,colToCheck] < cutoff)]
   
-  if(!length(significantSubRepertoires) >=1){cat("No differentially abundant subrepertoires found with given cutoff!\n"); return(repSeqObj)}
+  if(!length(significantSubRepertoires) >=1){
+    #cat("No differentially abundant subrepertoires found with given cutoff!\n"); 
+    return(repSeqObj)
+    }
   
   # DA clonotypes
   DAClonotypes = NULL
@@ -1826,7 +1829,7 @@ findDAClonotypesInDACluster<-function(clonotypes){
 
 #' @keywords internal
 #'
-compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
+compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs=NULL,paired=T){
   
   ### freqTable : an clone count table between sample groups, table has headers, headers 1 and 2 have the counts
   sam = round(freqTable)
@@ -1835,9 +1838,7 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
   
   # comparison for every pair of samples
 
-  rnds = length(pairs)/2
-  for (k in 1:rnds){
-    kpair = k + rnds
+  calculateFisherStats <- function(k,kpair){
     pvals=c()
     ORs=c()
     CIs=c()
@@ -1898,14 +1899,54 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
     
     res = cbind(inSample*1,NttoAA,as.numeric(pvals),ORs,CIs)
     
+    res
+  }
+    
+    
     
     #res=compareAbundanceFexactForRanking(sam[,c(k,kpair)])
+  if(paired==T){
+    rnds = length(pairs)/2
+    for (k in 1:rnds){
+      kpair = k + rnds 
+      res <- calculateFisherStats(k,kpair)
+      colnames(res) <- c("inSample","NTtoAA",paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"pvalue",sep="_"),paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"OR",sep="_"),paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"CI",sep="_"))
+      
+      resultlist[[k]] <- res
+      
+    } #fishers exact test done for all clones, all samples
+  }else{
+    for(g1 in which(pairs==levels(factor(pairs))[1])){
+      
+      resTemp <- list()
+      for(g2 in which(pairs==levels(factor(pairs))[2])){
+        k=g1
+        kpair=g2
+        res <- calculateFisherStats(k,kpair)
+        colnames(res) <- c("inSample","NTtoAA",paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"pvalue",sep="_"),paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"OR",sep="_"),paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"CI",sep="_"))
+        resTemp[[length(resTemp) + 1]] <- res
+        
+      }
+      
+       nSamplesWithTheCloneTemp <- c()
+       NttoasInsamplesTemp <- c()
+       pvalsTemp <- c()
+       orsTemp <- c()
+       
+        for(i in 1:nrow(sam)){
+        
+        nSamplesWithTheCloneTemp <- c(nSamplesWithTheCloneTemp,round(mean(as.numeric(sapply(resTemp,function(x) x[i,1])))))
+        NttoasInsamplesTemp  <- c(NttoasInsamplesTemp,mean(as.numeric(sapply(resTemp,function(x) x[i,2]))))
+        pvalsTemp  <- c(pvalsTemp,mean(as.numeric(sapply(resTemp,function(x) x[i,3]))))
+        orsTemp  <- c(orsTemp,mean(as.numeric(sapply(resTemp,function(x) x[i,4]))))
+        }
+      
+        resultlist[[g1]] <- cbind(nSamplesWithTheCloneTemp,NttoasInsamplesTemp,pvalsTemp,orsTemp)
+    }
     
-    colnames(res) <- c("inSample","NTtoAA",paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"pvalue",sep="_"),paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"OR",sep="_"),paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"CI",sep="_"))
-    
-    resultlist[[k]] <- res
-    
-  } #fishers exact test done for all clones, all samples
+  }
+  
+  
   
   # extract average pval and OR for clone across all samples
   avPvals <- c()
@@ -1947,38 +1988,6 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
 
 
 
-# This function identifies differentially abundant clonotypes by performing within sample clustering, 
-# automatically finding optimal number of clusters, across sample cluster matching, and differential abundance testing of clusters between conditions
-# 
-# @param repSeqObj is an object containing all repertoire sample data
-# @param paired a logical argument indicating indicating whether samples are paired. For now paired analysis only implemented
-# @return repSeqObj object with a list of DA clonotypes in $daClonotypes
-# @export
-# 
-# findDAClonotypes <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,cutoff=0.05,method="pvalue",positionWt = F){
-#   
-#  
-#   
-#   k = findOptimalK(repSeqObj,nSamEval=2,toupper(clusterby),kmerWidth,positionWt)
-#   
-#   # Find clusters for all samples
-#   repSeqObjWithClusters = findOptimalClusters(repSeqObj,50,toupper(clusterby),kmerWidth,positionWt)
-#   
-#   # Find DA clusters 
-#   repSeqObj = findDAClusters(repSeqObjWithClusters,abundanceType="cAbundance",testType="t.test",paired=paired)
-#   
-#   #Extract DA clones and association features (Vgenes etc)
-#   
-#   #TO DO : here implement the code that extracts the DA clonotypes , use extractSubRepertoire function for this
-#   
-#   repSeqObjWithDas = extractSubRepertoire(repSeqObj,cutoff=0.05,method="pvalue")
-#   
-#   repSeqObj = repSeqObjWithDas
-#   
-#   
-# }
-
-
 # Run DA analysis function :  .........................................................................
 
 #' This function performs differential abundance analysis between groups of TCRB CDR3 samples (repseq data) to identify differentially abundant (DA) CDR3s. 
@@ -2004,6 +2013,8 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
 #' If false, the intermediate results fro all runs are not returned, only a data frame with candidate differentially abundant CDR3s and their filterig results is returned.
 #' @param nRR the number of permutations to perform in the ranking step of candidate DA CDR3s to determine statistical significance.
 #' @return a data frame with all candidate DA CDR3s if returnAll is false, a list with data frame of candidate DA CDR3s and all intermediate results if returnAll is true.
+#' 
+#' @example results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=2,resampleSize=1000,useProb=T,returnAll=T,nRR=1000)
 #' 
 #' @export
 # 
@@ -2042,7 +2053,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     }
     
     # Find DA clusters 
-    samObj = findDAClusters(samObjWithClusters,abundanceType="cAbundance",testType="t.test",paired=T) # first option
+    samObj = findDAClusters(samObjWithClusters,abundanceType="cAbundance",testType="t.test",paired=paired) # first option
     #samObj = findDAClusters(samObjWithClusters,abundanceType="cAbundance",testType="RankProd",paired=T)
     #samObj = findDAClusters(samObjWithClusters,abundanceType="cRelCloneSize",testType="RankProd",paired=T) # second best option
     #samObj = findDAClusters(samObjWithClusters,abundanceType="cRelCloneSize",testType="t.test",paired=F)
@@ -2076,7 +2087,11 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   allCandidateClones <- unlist(cDaClonotypesList)
   
   if(length(allCandidateClones) > 0 ){
-    cat("Number of candidate clonotypes detected as differentially abundant before filtering: ",length(allCandidateClones),"\n")
+    
+    allnRepeats <- length(cDaClonotypesList[[2]])
+    nRepeatsWithHits <- length(cDaClonotypesList[[2]]) - length(is.null(cDaClonotypesList[[2]]))
+    
+    cat("Number of candidate CDR3 clonotypes detected as differentially abundant before filtering: ",length(allCandidateClones),"\n\t Candidate DA CDR3s detected from ",nRepeatsWithHits,"out of",allnRepeats,"repeat resamples.\n")
   }else{
     cat("No differentially abundant clonotypes detected.\n")
     
@@ -2146,7 +2161,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   rfRank <- as.numeric(factor(-varimp[,1]))
   
   
-  fishExactRes <- compareAbundanceInPairedSamplesForRanking(repSeqObj,DAClonotypeAbundanceMatrix2_selected,repSeqObj$group)
+  fishExactRes <- compareAbundanceInPairedSamplesForRanking(repSeqObj,DAClonotypeAbundanceMatrix2_selected,repSeqObj$group,paired)
   
   fishExactRes$ntaaRank <- as.numeric(factor(-fishExactRes[,1]))
   fishExactRes$pvalRank <- as.numeric(factor(fishExactRes[,2]))
@@ -2232,6 +2247,110 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   return(toRet)
 }
 
+
+
+
+#' Extract top differentially abundant CDR3 sequences 
+#' 
+#' This function extracts condition associated CDR3s given the result of the runDaAnalysis function with a given p-value cutoff
+#' 
+#' @param candidateList the list of candidate DA CDR3s, the return value of runDaAnalysis function
+#' @param enriched logical; true returns differentially enriched CDR3s, false returns differentially de-enriched CDR3s. Default is true
+#' @param pValueCutoff the cutoff p-value, default is 0.05
+#' @return function returns a data frame of the candidate CDR3s that have significant p-value, that is below the pValueCutoff
+#' 
+#' @example TopDAClonotypes(results,enriched=T,pValueCutoff=T) # results is an object holding the result of running runDaAnalysis
+#' 
+#' @export
+#' 
+TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05){
+ 
+  if(is.data.frame(candidateList) & nrow(candidateList) > 0){
+    candidateCDR3s <- candidateList
+  }else if(nrow(candidateList[[1]]) > 0){
+    candidateCDR3s <- candidateList[[1]]
+  }else{
+    stop("The list does not contain any candidate CDR3s.")
+  }
+  
+  if(enriched==T){
+    daCDR3s <- candidateCDR3s[candidateCDR3s$permutedEnPval < pValueCutoff,]
+  }else{
+    daCDR3s <- candidateCDR3s[candidateCDR3s$permutedDeEnPval < pValueCutoff,]
+    
+  }
+  
+  daCDR3s 
+
+}
+
+
+#' V-gene usage analysis in differentially abundant CDR3s
+#' 
+#' This function compares observed V-gene frequencies to frequencies obtained from randomly sampled sets of CDR3s from pooled repertoires of all samples to evaluate bias in V-gene usage
+#' 
+#' @param repSamObj is a repseq data object containing all repertoire sample data 
+#' @param DaClonotypes a vector of CDR3 amino acid sequences that are considered to be differentially abundant
+#' @param n the number of repeat resamples to perform; each random resample samples CDR3s the same size as the DaClonotypes. Default is 20
+#' @return function returns a data frame with the observed frequency, frequencies in random resamples, mean of the frequencies in the random resamples,
+#' the p-value estimated from the null distribution of resampled frequencies, and percent increase in v-gene usage for every V-genes used in the DA DR3s
+#' 
+#' @export
+#' 
+computeVgeneEnrichement <- function(repSamObj,DaClonotypes,n=20){
+  
+  getVgenesInsamples <- function(aaClones){
+    observedVgenes <- c()
+    for(i in names(repSamObj$sampleData)){
+      tempD <- repSamObj$sampleData[[i]][repSamObj$sampleData[[i]]$AMINOACID %in% aaClones,]
+      observedVgenes <- c(observedVgenes,tempD$VGENENAME)
+    }
+    observedVgenes
+  }
+  
+  observedVgenes <- getVgenesInsamples(DaClonotypes)
+  observedVgenesFreq <- table(observedVgenes)/sum(table(observedVgenes))
+  
+  vgeneFreqObsAndSampled <- data.frame(observedVgeneFreq=as.numeric(observedVgenesFreq))
+  rownames(vgeneFreqObsAndSampled) <- names(observedVgenesFreq)
+  
+  pooledRep <- getPooledSamples(repSamObj)
+  
+  for(i in 1:n){
+    
+    temp = pooledRep;
+    randomDrawnClonesidx = sample(1:nrow(temp),length(DaClonotypes),replace=T,prob=pooledRep$FREQUENCYCOUNT)
+    randomClones <- temp[randomDrawnClonesidx,]
+    
+    sampledVgenes <- getVgenesInsamples(randomClones$AMINOACID)
+    sampledVgenesFreq <- table(sampledVgenes)/sum(table(sampledVgenes))
+    
+    sampledVgenesFreq <- sampledVgenesFreq[which(names(sampledVgenesFreq) %in% names(observedVgenesFreq))]
+    
+    notinsampled <- rep(0,sum(!names(observedVgenesFreq) %in% names(sampledVgenesFreq)))
+    names(notinsampled) <- names(observedVgenesFreq)[!names(observedVgenesFreq) %in% names(sampledVgenesFreq)]
+    
+    sampledVgenesFreq <- c(sampledVgenesFreq,notinsampled)
+    sampledVgenesFreq <- sampledVgenesFreq[sort(names(sampledVgenesFreq))]
+    
+    vgeneFreqObsAndSampled <- cbind(vgeneFreqObsAndSampled,as.numeric(sampledVgenesFreq))
+    
+  }
+  
+  
+  meanVgeneFreqInRandomSamples <- apply(vgeneFreqObsAndSampled,1,function(x) mean(x[-1]))
+  
+  VfreqDiffPval <- apply(vgeneFreqObsAndSampled,1,function(x) sum(x[-1] >= x[1]) / length(x[-1]))
+  perIncrease <- apply(vgeneFreqObsAndSampled,1,function(x) (x[1]-mean(x[-1]))/mean(x[-1]))
+  
+  vgeneFreqObsAndSampled$meanVgeneFreqInRandomSamples <- meanVgeneFreqInRandomSamples
+  vgeneFreqObsAndSampled$VfreqDiffPval <- VfreqDiffPval
+  vgeneFreqObsAndSampled$perIncrease <- perIncrease * 100
+  
+  rownames(vgeneFreqObsAndSampled) <- gsub("C","", rownames(vgeneFreqObsAndSampled))
+  
+  return(vgeneFreqObsAndSampled)
+}
 
 
 
