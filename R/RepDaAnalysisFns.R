@@ -594,7 +594,7 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
     #seq_mers <- t(apply(seq_mers,1,function(x) x/sum(x)))
     
     
-    registerDoParallel(cores=detectCores())  
+    doParallel::registerDoParallel(cores=detectCores())  
     
     
     # evaluate ks from 5-maxK based on silhouette and data compression 
@@ -625,12 +625,12 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
         
         #print(head(dcalculated))
         if(useCmeans==T){
-          fuzzyc <- cmeans(seqmersResampled, centers=50, iter.max = 100, verbose = FALSE,dist = "euclidean", method = "cmeans")
-          silmuke <- SIL(as.matrix(seqmersResampled), fuzzyc$membership)
+          fuzzyc <- e1071::cmeans(seqmersResampled, centers=50, iter.max = 100, verbose = FALSE,dist = "euclidean", method = "cmeans")
+          silmuke <- fclust::SIL(as.matrix(seqmersResampled), fuzzyc$membership)
         }else{
           cls <- cutree(hc,j)
           #cls <-cutreeDynamic(hc,distM=as.matrix(dcalculated),minClusterSize=j,verbose=0)
-          siSeqMers <- silhouette(cls,dcalculated)
+          siSeqMers <- cluster::silhouette(cls,dcalculated)
         }
         avgSilWidth <- summary(siSeqMers)$avg.width
         
@@ -734,7 +734,7 @@ getKmerFrequency <- function(seqs,type="NT",k=4,normForLength=F){
     
     seqList <- as.list(seqs)
     seqAAbin <- as.AAbin(seqList)
-    seq_mers <- kcount(seqAAbin,k=k)
+    seq_mers <- kmer::kcount(seqAAbin,k=k)
     rownames(seq_mers) <- seqs
     
     ## selecting the most variable kmers only since AA kmers are numorous
@@ -1142,7 +1142,7 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
       
       centroidKmcls <- kmeans(combinedCentroids,maxKacrossSamples,iter.max = 50,nstart = 50)
       
-      sicentroid <- silhouette(centroidKmcls$cluster,combinedCentroidsdist)
+      sicentroid <- cluster::silhouette(centroidKmcls$cluster,combinedCentroidsdist)
       avgSilWidth <- summary(sicentroid)$avg.width
       
       nClusSilWidthAboveAverage <- sum(summary(sicentroid)$clus.avg.widths > avgSilWidth)/j # between 0-1
@@ -1168,7 +1168,7 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
       dcalc1= dist.matrix(combinedCentroids, method=distMethod, convert=T, as.dist=TRUE)
       
       hc<-hclust(dcalc1,method="complete")
-      cls <-cutreeDynamic(hc,distM=as.matrix(dcalc1),minClusterSize=1,verbose=0) 
+      cls <- dynamicTreeCut::cutreeDynamic(hc,distM=as.matrix(dcalc1),minClusterSize=1,verbose=0) 
       
       centroidKmcls$cluster <- cls
       names(centroidKmcls$cluster) <- rownames(combinedCentroids)
