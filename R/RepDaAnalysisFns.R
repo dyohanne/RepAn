@@ -758,6 +758,10 @@ getKmerFrequency <- function(seqs,type="NT",k=4,normForLength=F){
 
 # Find starting position of kmer cdr3 sequence
 
+#' Determine weight of kmer depending on position
+
+#' @keywords internal
+#' 
 determineWeight <- function(kmer,seq){
   
   kmerPositions = as.numeric(gregexpr(kmer,seq)[[1]])
@@ -785,18 +789,31 @@ determineWeight <- function(kmer,seq){
 
 
 # cosine distance
+
+#' cosine distance
+
+#' @keywords internal
+#' 
 cosineDist <- function(x){
   as.dist(1 - x%*%t(x)/(sqrt(rowSums(x^2) %*% t(rowSums(x^2))))) 
 }
 
 # normalized shannon entropy
+
+#' normalized shannon entropy
+
+#' @keywords internal
+#' 
 shannonEntropy <- function(freqs){
   return(-sum(freqs * (log2(freqs)/log2(length(freqs)))))
 }
 
 
 
+#' subrepertoire fold change
 
+#' @keywords internal
+#' 
 getClusterFoldChanges <- function(sam1,sam2,consensusT,s1cls,s2cls){
   
   clusterFc=c()
@@ -830,7 +847,10 @@ getClusterFoldChanges <- function(sam1,sam2,consensusT,s1cls,s2cls){
 }
 
 
+#' finds optimal clusters within samples and matches them across samples
 
+#' @keywords internal
+#' 
 findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,distMethod="euclidean",useDynamicTreeCut=T,matchingMethod=c("hc","km","og")){
   
   # First do clustering for all samples
@@ -1028,6 +1048,10 @@ findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,d
 }
 
 
+#' find matching clusters of CDR3s
+
+#' @keywords internal
+#' 
 getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMethod="euclidean"){
   
 
@@ -1195,6 +1219,10 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
 }
 
 
+#' Find matching cluster
+
+#' @keywords internal
+#' 
 getMatchingCluster <- function(combinedSams){
   dtocluster<- as.matrix(dist(combinedSams,diag = T,upper=T))[-1,1]
   imin <- names(which(dtocluster==min(dtocluster))) # imin holds cluster number in s2 that is closest to cluster i from samClusterCentroids.
@@ -1213,6 +1241,10 @@ getMatchingCluster <- function(combinedSams){
 
 # This would probably be good when there are small number of samples, which is likely in Repseq studies (e.g upto 3 samples)
 
+#' compare cluster abundances for paired cases
+
+#' @keywords internal
+#'
 compareClusterAbundancesPaired <- function(sam1,sam2,clusMatchTable,s1cls,s2cls){
   
   clusterFcs=c()
@@ -1287,6 +1319,10 @@ compareClusterAbundancesPaired <- function(sam1,sam2,clusMatchTable,s1cls,s2cls)
   
 }
 
+#' compare cluster abundances for unpaired cases
+
+#' @keywords internal
+#'
 compareClusterAbundancesUnPaired <- function(repSeqObj){
   
   clusterFcs=c()
@@ -1376,6 +1412,10 @@ compareClusterAbundancesUnPaired <- function(repSeqObj){
 
 # work on the following to get differentially abundant clusters of clontoypes
 
+#' estimate the abundance of cluster of CDR3s
+
+#' @keywords internal
+#'
 getClusterAbundancesTable<- function(repSeqObj){
   
   
@@ -1475,6 +1515,10 @@ getClusterAbundancesTable<- function(repSeqObj){
 
 
 
+#' Find differentially abundant subrepertoires
+
+#' @keywords internal
+#'
 findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance","cRelCloneSize"),testType=c("t.test", "wilcox.test", "RankProd"), paired=F, ...){
   
   
@@ -1625,6 +1669,10 @@ findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance
 
 # extract subrepertoires of interest ........................................................................
 
+#' Extract DA subrepertoire and CDR3s contained in them
+
+#' @keywords internal
+#'
 extractDASubRepertoire <- function(repSeqObj,cutoff=0.1,method="pvalue"){
   
   # choose method
@@ -1689,7 +1737,10 @@ return(repSeqObj)
 }
 
 
+#' Extract any subrepertoire and CDR3s contained in them
 
+#' @keywords internal
+#'
 extractSubRepertoire <- function(repSeqObj,subReps=NULL){
   
   if(is.null(subReps))
@@ -1741,7 +1792,10 @@ extractSubRepertoire <- function(repSeqObj,subReps=NULL){
 }
 
 
+#' Find out previously known Celiac disease CDR3s among DA clonotypes detected
 
+#' @keywords internal
+#'
 findDAClonotypesInDACluster<-function(clonotypes){
   clonotypes=as.vector(clonotypes)
     
@@ -1768,6 +1822,11 @@ findDAClonotypesInDACluster<-function(clonotypes){
 }
 
 # fishers exact test ranking:
+
+#' perform fisher's exact test based ranking of candidate DA CDR3s
+
+#' @keywords internal
+#'
 compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs){
   
   ### freqTable : an clone count table between sample groups, table has headers, headers 1 and 2 have the counts
