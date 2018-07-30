@@ -864,8 +864,7 @@ findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,d
   
   for(i in 1:length(repSeqObj$samNames)){
     
-    
-    cResult = getClusterLables(repSeqObj$scaledSampleData[[i]],k,clusterby,kmerWidth,posWt,distMethod,useDynamicTreeCut=T)
+    cResult = getClusterLables(repSeqObj$scaledSampleData[[i]],k,clusterby,kmerWidth,posWt,distMethod,useDynamicTreeCut=useDynamicTreeCut)
     
     withinSampleClusters[[length(withinSampleClusters)+1]] <- cResult
     
@@ -2039,7 +2038,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
       samObjWithClusters = findOptimalClusters(samObj,k=NULL,clusterby,kmerWidth,positionWt,distMethod,useDynamicTreeCut=useDynamicTreeCut,matchingMethod=matchingMethod)
     }else{
       k = findOptimalK(sam2Obj,nSamEval=4,clusterby,kmerWidth=kmerWidth,posWt=positionWt,distMethod)
-      samObjWithClusters = findOptimalClusters(samObj,k,clusterby,kmerWidth,positionWt,distMethod,useDynamicTreeCut=F,matchingMethod=matchingMethod)
+      samObjWithClusters = findOptimalClusters(samObj,k,clusterby,kmerWidth,positionWt,distMethod,useDynamicTreeCut=useDynamicTreeCut,matchingMethod=matchingMethod)
     }
     
     # Find DA clusters 

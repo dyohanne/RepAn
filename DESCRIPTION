@@ -12,6 +12,7 @@ Description: RepAn mainly performs differential abundance analysis by comparing 
 License: GPL-3
 Depends:
     R (>= 2.15.1),
+    Matrix (>= 1.2-7.1),
     ggplot2 (>= 1.0.0)
 Imports:
     dynamicTreeCut,
@@ -21,7 +22,6 @@ Imports:
     doParallel (>= 1.0.10),
     preprocessCore (>= 1.32.0),
     randomForest (>= 4.6-12),
-    Matrix (>= 1.2-7.1),
     gplots (>= 3.0.1),
     wordspace (>= 0.2-0),
     e1071 (>= 1.6-7),
