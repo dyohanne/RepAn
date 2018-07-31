@@ -2087,8 +2087,8 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   if(length(allCandidateClones) > 0 ){
     
-    allnRepeats <- length(cDaClonotypesList)
-    nRepeatsWithHits <- length(cDaClonotypesList) - length(is.null(cDaClonotypesList))
+    allnRepeats <- nRepeats
+    nRepeatsWithHits <- nRepeats - length(cDaClonotypesList)
     
     cat("Candidate DA CDR3s detected from ",nRepeatsWithHits,"out of",allnRepeats,"repeat resamples.","\n Number of candidate CDR3 clonotypes detected as differentially abundant before filtering: ",length(allCandidateClones),"\n")
   }else{
