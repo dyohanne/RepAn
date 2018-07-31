@@ -15,15 +15,16 @@ export(scaleSamples)
 export(setUp)
 import(cluster)
 import(kmer)
-import(ape)
-import(data.table)
 import(randomForest)
 import(gplots)
 import(wordspace)
 import(dendextend)
+importFrom(ape,as.AAbin)
 importFrom(doParallel,registerDoParallel)
 importFrom(fclust,SIL)
 importFrom(dynamicTreeCut,cutreeDynamic)
 importFrom(e1071,cmeans)
+importFrom(data.table,fread)
+
 
 

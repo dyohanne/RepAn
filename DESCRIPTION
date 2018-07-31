@@ -34,7 +34,8 @@ Imports:
     ape (>= 5.1),
     RankProd,
     preprocessCore,
-    ggseqlogo (>= 0.1)
+    ggseqlogo (>= 0.1),
+    fclust
 RoxygenNote: 6.1.0
 Encoding: UTF-8
 
