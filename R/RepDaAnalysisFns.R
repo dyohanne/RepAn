@@ -486,15 +486,7 @@ getCenters <- function(seqmers,clslabels){
   for(i in names(clusters)){
     # drop clusters labeled zero which contain clearly unassigned members when using dynamic tree cut
     if(i > 0){
-      
-    
-      print(i)
-      print(length(which(clslabels==i)))
-      
       selected <- seqmers[which(clslabels==i),,drop=F]
-     
-      print(head(selected))
-      
       centroid <- Matrix::colMeans(selected)
       clusterCenterNames <- c(clusterCenterNames,paste(i,sep=""))
       clusterCenters <- rbind(clusterCenters,centroid)
