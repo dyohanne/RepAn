@@ -51,3 +51,7 @@ Function performs clustering based differential abundance analysis of CDR3 seque
 performs within sample unsupervised clustering using subsequence frequency based unsupervised clustering, matches the clusters to their closest match across samples, and performs differential abundance testing at the level of matching
 clusters to identify differentially abundant condition associated CDR3 sequences
 }
+\examples{
+results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=2,resampleSize=1000,useProb=T,returnAll=T,nRR=1000)
+
+}

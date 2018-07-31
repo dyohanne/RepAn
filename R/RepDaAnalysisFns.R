@@ -18,7 +18,6 @@
 #' @param itemName the name of the new item to be added to the repseq object
 #' @return a repSeq object with the new item added to its list of members. 
 #' @export
-
 addItemToObject <- function(object,item,itemName){
   
   # replace item or add it as new item
@@ -2014,7 +2013,7 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs=NUL
 #' @param nRR the number of permutations to perform in the ranking step of candidate DA CDR3s to determine statistical significance.
 #' @return a data frame with all candidate DA CDR3s if returnAll is false, a list with data frame of candidate DA CDR3s and all intermediate results if returnAll is true.
 #' 
-#' @example results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=2,resampleSize=1000,useProb=T,returnAll=T,nRR=1000)
+#' @examples results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=2,resampleSize=1000,useProb=T,returnAll=T,nRR=1000)
 #' 
 #' @export
 # 
@@ -2259,7 +2258,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
 #' @param pValueCutoff the cutoff p-value, default is 0.05
 #' @return function returns a data frame of the candidate CDR3s that have significant p-value, that is below the pValueCutoff
 #' 
-#' @example TopDAClonotypes(results,enriched=T,pValueCutoff=0.05) # results is an object holding the result of running runDaAnalysis
+#' @examples TopDAClonotypes(results,enriched=T,pValueCutoff=0.05) # results is an object holding the result of running runDaAnalysis
 #' 
 #' @export
 #' 
