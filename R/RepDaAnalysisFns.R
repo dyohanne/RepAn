@@ -493,7 +493,7 @@ getCenters <- function(seqmers,clslabels){
       
       selected <- seqmers[which(clslabels==i),,drop=F]
      
-      print(dim(selected))
+      print(head(selected))
       
       centroid <- colMeans(selected)
       clusterCenterNames <- c(clusterCenterNames,paste(i,sep=""))
