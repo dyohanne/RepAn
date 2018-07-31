@@ -495,7 +495,7 @@ getCenters <- function(seqmers,clslabels){
      
       print(head(selected))
       
-      centroid <- colMeans(selected)
+      centroid <- Matrix::colMeans(selected)
       clusterCenterNames <- c(clusterCenterNames,paste(i,sep=""))
       clusterCenters <- rbind(clusterCenters,centroid)
     }
