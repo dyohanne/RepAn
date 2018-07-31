@@ -18,7 +18,6 @@ import(cluster)
 import(kmer)
 import(gplots)
 import(wordspace)
-import(dendextend)
 import(doParallel)
 import(parallel)
 import(ggplot2)
@@ -29,6 +28,9 @@ importFrom(randomForest,randomForest)
 importFrom(randomForest,importance)
 importFrom(e1071,cmeans)
 importFrom(data.table,fread)
+importFrom(dendextend,as.dendrogram)
+importFrom(dendextend,labels_colors)
+
 
 
 
