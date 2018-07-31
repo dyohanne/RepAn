@@ -4,7 +4,8 @@
 \alias{compareAbundanceInPairedSamplesForRanking}
 \title{perform fisher's exact test based ranking of candidate DA CDR3s}
 \usage{
-compareAbundanceInPairedSamplesForRanking(samObj, freqTable, pairs)
+compareAbundanceInPairedSamplesForRanking(samObj, freqTable,
+  pairs = NULL, paired = T)
 }
 \description{
 perform fisher's exact test based ranking of candidate DA CDR3s
