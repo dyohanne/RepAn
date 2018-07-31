@@ -1,10 +1,11 @@
 Package: RepAn
 Type: Package
-Title: Differential abundance Analysis for deep sequenced immune repertoire (Repseq) datasets
 Version: 0.1.1
 Date: 2018-07-26
-Author: Dawit A. Yohannes 
+Author: Dawit A. Yohannes
 Maintainer: Dawit A. Yohannes <dawit.yohannes@helsinki.fi>
+URL: https://www.helsinki.fi/en/researchgroups/immunomics
+Title: Differential abundance Analysis for deep sequenced immune repertoire (Repseq) datasets
 Description: RepAn mainly performs differential abundance analysis by comparing immune repertoire
     samples in two conditon groups to find condition associated CDR3 sequences. It conducts the comparison between sample groups 
     at population level at the level of sub-repertoires, which are clusters of CDR3s that have shared immuno-genomic features across samples. 
