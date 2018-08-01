@@ -49,7 +49,7 @@ An example Repseq data object called CDRepseqObj prepared from PBMC TCRB CDR3 re
 
 ```
 results <- runDaAnalysis(CDRepseqObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt=F,
-  distMethod="euclidean",matchingMethod="km",nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000)
+  distMethod="euclidean",matchingMethod="km",nRepeats=5,resampleSize=3000,useProb=T,returnAll=T,nRR=1000)
 ```
 
 Significantly differentially enriched CDR3s (with permuted p-values < 0.05), that have shown significant clonal expansion in condition 2, can be accessed from the result using :

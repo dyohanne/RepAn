@@ -1,15 +1,9 @@
-# June 18, 2015
-#
 ### ***************************************************************
 ### ******** Basic analysis for TCR repertoire data **************
 ### ***************************************************************
-#require(ggplot2)
+
 
 ########################### External R packages ###########################
-
-#library(seqRFLP) # write to fasta files
-#library(Biostrings) #  for basic sequence manipulation
-#library(permute)
 
 loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","cluster","data.table","NbClust","doParallel","dendextend","kmer","ape","Matrix","wordspace","dynamicTreeCut","e1071","fclust","randomForest","preprocessCore","gplots")){
   # other probably needed packages that have been removed for now: "Rclusterpp"
@@ -39,12 +33,9 @@ loadBioconductorPacks <- function(package.list = c("Biostrings","RankProd","prep
 
 ## read data files ####
 
-
-
 readSample <- function(samplename,cloneStatus="p"){
   
   # read sample name and change colnames to uppercase
-  
   sam <- read.table(samplename, header=T, sep="\t",dec = ".",stringsAsFactors=F)
   #sam <- as.data.frame(fread(samplename, header=T, sep="\t",stringsAsFactors=F))
   
@@ -57,7 +48,6 @@ readSample <- function(samplename,cloneStatus="p"){
   sam <- data.frame(sam,CDR3NT,stringsAsFactors=F)
   
   # if there is a column named copy, change it to COUNT
-  
   if(sum(colnames(sam) == "COPY") == 1){
     
     colnames(sam)[which(colnames(sam) == "COPY")] <- "UNNORMALIZEDCOUNT"
@@ -68,7 +58,6 @@ readSample <- function(samplename,cloneStatus="p"){
   }
   
   # filter sample for only productive or unproductive clonotypes
-  
   if(cloneStatus == "p"){
     sam = getProductive(sam)
   }else if(cloneStatus == "unp"){
@@ -121,7 +110,7 @@ readSampleV2 <- function(samplename,cloneStatus="p"){
 
 
 renameCopyTOCount <- function(samplename){
-  # read sample name and change colnames to uppercase
+  # change some variable names
   for(rep in reps){
     sam <- get(rep)
     
@@ -139,7 +128,6 @@ renameCopyTOCount <- function(samplename){
 }
 
 extractCDR3 <- function(samplename){
-  # read sample name and change colnames to uppercase
   for(rep in reps){
     p <- get(rep)
     CDR3NT = substring(p$NUCLEOTIDE,p$VINDEX,p$VINDEX+p$CDR3LENGTH)
@@ -254,7 +242,7 @@ getUniqueJgenes <- function(rep) {
 # clone level
 getVgeneCloneCountPMatrix<- function(reps,g){
   ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### The proportions of available clones using each v gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data. 
   
@@ -311,7 +299,7 @@ getVgeneCloneCountMatrix <- function(reps,g){
 
 getVgeneCloneCountPMatrixUnprod<- function(reps,g){
   ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### The proportions of available unproductive clones using each v gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -338,7 +326,7 @@ getVgeneCloneCountPMatrixUnprod<- function(reps,g){
 
 getVgeneCloneCountMatrixUnprod <- function(reps,g){
   ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### The number of available unproductive clones using each v gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -363,8 +351,8 @@ getVgeneCloneCountMatrixUnprod <- function(reps,g){
 
 
 getVjCloneCountMatrix<- function(reps,vj){
-  ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### Returns a datamatrix whose first two colums show the Vj gene combinations. The remaining columns show 
+  ### The number of available clones using each vj gene combination for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -391,8 +379,8 @@ getVjCloneCountMatrix<- function(reps,vj){
 }
 
 getVjCloneCountMatrixUnprod<- function(reps,vj){
-  ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### Returns a datamatrix whose first two colums show the Vj gene. The remaining columns show 
+  ### The number of available unproductive clones using each vj gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -419,8 +407,8 @@ getVjCloneCountMatrixUnprod<- function(reps,vj){
 }
 
 getVjCloneCountPMatrix<- function(reps,vj){
-  ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### Returns a datamatrix whose first two colums show the Vj gene. The remaining columns show 
+  ### The proportions of available clones using each vj gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -448,8 +436,8 @@ getVjCloneCountPMatrix<- function(reps,vj){
 }
 
 getVjCloneCountPMatrixUnprod<- function(reps,vj){
-  ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### Returns a datamatrix whose first two colums show the Vj gene. The remaining columns show 
+  ### The proportions of available unproductive clones using each vj gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -481,7 +469,7 @@ getVjCloneCountPMatrixUnprod<- function(reps,vj){
 
 getVgeneReadCountPMatrix<- function(reps,g){
   ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### The proportions of available clones using each v gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data. 
   
@@ -533,7 +521,7 @@ getVgeneReadCountMatrix <- function(reps,g){
 
 getVgeneReadCountPMatrixUnprod<- function(reps,g){
   ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### The proportions of available unproductive clones using each v gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -559,7 +547,7 @@ getVgeneReadCountPMatrixUnprod<- function(reps,g){
 
 getVgeneReadCountMatrixUnprod <- function(reps,g){
   ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### The number of available unproductive clones using each v gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -584,8 +572,8 @@ getVgeneReadCountMatrixUnprod <- function(reps,g){
 }
 
 getVjReadCountMatrix<- function(reps,vj){
-  ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### Returns a datamatrix whose first two colums show the vj gene. The remaining columns show 
+  ### The number of available clones using each vj gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -612,8 +600,8 @@ getVjReadCountMatrix<- function(reps,vj){
 }
 
 getVjReadCountMatrixUnprod<- function(reps,vj){
-  ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### Returns a datamatrix whose first two colums show the Vj gene. The remaining columns show 
+  ### The number of available unproductive clones using each vj gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -640,8 +628,8 @@ getVjReadCountMatrixUnprod<- function(reps,vj){
 }
 
 getVjReadCountPMatrix<- function(reps,vj){
-  ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### Returns a datamatrix whose first two colums show the Vj gene. The remaining columns show 
+  ### The proportions of available clones using each vj gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   
@@ -669,8 +657,8 @@ getVjReadCountPMatrix<- function(reps,vj){
 }
 
 getVjReadCountPMatrixUnprod<- function(reps,vj){
-  ### Returns a datamatrix whose first two colums show the V gene. The remaining columns show 
-  ### The number of available clones using each v gene for each sample
+  ### Returns a datamatrix whose first two colums show the Vj gene. The remaining columns show 
+  ### The proportions of available unprod. clones using each vj gene for each sample
   
   #reps = a vector of dataframe names. The data frames are TCR repertoire data
   

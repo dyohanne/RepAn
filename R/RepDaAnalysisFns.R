@@ -259,8 +259,6 @@ sampleFromPooled <- function(repSeqObj,nClones,cType="AA",useProb=T){
   
   scaledSampleData = list()
   
-  # first normalize and pool the data. 
-  # Normalization is critical since relative frequency in the pool will be done from the clone sizes in respective samples (which depends on library size)
   pooledRep <- NULL
   
   for(i in 1:length(names(repSeqObj$sampleData))){
@@ -302,8 +300,6 @@ sampleWithFeatuersFromPooled <- function(repSeqObj,nClones,useProb=T){
   
   scaledSampleData = list()
   
-  # first normalize and pool the data. 
-  # Normalization is critical since relative frequency in the pool will be done from the clone sizes in respective samples (which depends on library size)
   pooledRep <- NULL
   
   for(i in 1:length(names(repSeqObj$sampleData))){
@@ -346,8 +342,6 @@ getPooledSamples <- function(repSeqObj,g=NULL){
   if(is.null(g)){
     g=repObj$group
   }
-  # first normalize and pool the data. 
-  # Normalization is critical since relative frequency in the pool will be done from the clone sizes in respective samples (which depends on library size)
   pooledRep <- NULL
   
   for(i in names(repSeqObj$sampleData)[repSeqObj$group %in% g]){
@@ -374,17 +368,7 @@ getPooledSamples <- function(repSeqObj,g=NULL){
 
 getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMethod="euclidean",useDynamicTreeCut=T){
   
-  #print(head(sam))
-  #print(nrow(sam))
-  #p <- getProductive(sam)
-  #sam <- p
-  #print(nrow(p))
-  
-  # decide to use either AA or CDR3nt
  
-  # decide to use either AA or CDR3nt
-  #sam =  repSeqObj$scaledSampleData[[1]]
-  
   if(clusterby=="NT"){
     seqs <- unique(sam$CDR3NT) # use extracted CDR3 NT sequence 
     seq_mers <- getKmerFrequency(seqs,type="NT",k=kmerWidth)
@@ -433,12 +417,7 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   #print(head(dcalculated))
   hc<-hclust(dcalculated,method="complete")
   
-  # use fast hclust implementation
-  #hc<-Rclusterpp.hclust(seq_mers, method="ward", distance="euclidean")
-  
-  #plot(hc,cex = 0.5)
-  
-  
+
   #clusters=cutreeDynamicTree(hc, maxTreeHeight = max(dcalculated), minModuleSize = 50)
   #cls= cutreeHybrid(hc,distM=as.matrix(dcalculated))
   #cls <- cutree(hc,k)
@@ -448,13 +427,8 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
     cls <- cutree(hc,k)
   }
   
-  # For fast hclust, Since cutree for Rclusterpp.hclust returns varying number of clusters, not necessarily equal to k, we drop clusters with the smallest number of clones.
-  #cls <- cls[cls %in% names(sort(table(cls),decreasing=T)[1:k])]
-  
-  #rect.hclust(hc,k)
-  
-  #distanceAndClusters=list(seqs=as.character(seqs),seqmers=seq_mers,distmatrix=as.matrix(dcalculated),clusters=cls$labels)
-  
+
+ 
   clsCenters <- getCenters(seq_mers,cls)
   #distanceAndClusters <- list(seqs=as.character(seqs),seqmers=seq_mers,distmatrix=as.matrix(dcalculated),clusters=cls,clusterCenters=clsCenters)
   
@@ -462,7 +436,7 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   distanceAndClusters <- list(seqs=as.character(seqs),seqmers=seq_mers,clusters=cls,clusterCenters=clsCenters)
   
   
-  #return(cls$labels)
+ 
   return(distanceAndClusters)
   
 }
@@ -611,18 +585,11 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
         
       hc<-hclust(dcalculated,method="complete")  # it was average linkage, but it did not work well
       
-      #plot(hc,labels=F,hang = -1)
-      #clusters<-cutreeDynamic(hc,distM=as.matrix(dcalculated),minClusterSize=100) # min clustersize may get changed
-      
-      # Here may be try fuzzy c-means, kmeans, or dbscan instead of hclust. Start k with k that allows 10% of total number of clones per cluster 
-      # (e.g if total numer of clones,n, is 3000, then start with 3000/10, k = 10 ie., n/(n * 0.1)), check dbscan as well
-      
-      #hc<-Rclusterpp.hclust(seqmersResampled, method="ward", distance="euclidean")
-      
+     
       sils <- c()
       for(j in minNClust:maxK){
         
-        #print(head(dcalculated))
+       
         if(useCmeans==T){
           fuzzyc <- e1071::cmeans(seqmersResampled, centers=50, iter.max = 100, verbose = FALSE,dist = "euclidean", method = "cmeans")
           silmuke <- fclust::SIL(as.matrix(seqmersResampled), fuzzyc$membership)
@@ -638,12 +605,7 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
         compressionGain <-j/nrow(seqmersResampled)
         avgSil <- (avgSilWidth + 1)/2 # add 1 to avg silhouette and divide by 2 to make it between 0 and 1
         
-        #clustSizeEntropy <- shannonEntropy(summary(siSeqMers)$clus.sizes/sum(summary(siSeqMers)$clus.sizes)) 
-        #kscore <- (nClusSilWidthAboveAverage + compressionGain + avgSil + clustSizeEntropy)/4 # between 0 and 1
-        
-        #kscore <- (nClusSilWidthAboveAverage + compressionGain + avgSil)/3 # between 0 and 1
-        
-        #kscore <- (nClusSilWidthAboveAverage + avgSil)/2
+         
         kscore <- avgSil
         sils <- c(sils,kscore)
         
@@ -655,16 +617,13 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
     
     maxScoreK = minNClust + which.max(apply(ks_sils,2,mean)) - 1
     
-    # plot k evaulation
-    #pdf(file="optimalKPlot.pdf")
   
     plot(minNClust:maxK,apply(ks_sils,2,mean),xlab="K",ylab="mean K evaulation score",type="l",main=paste("K evaluation scores in sample:",sam))
     abline(v=maxScoreK,col="red")
     axis(1, at=maxScoreK,labels=maxScoreK,col="red")
   
     
-    #dev.off()
-    
+
   
     optimalK = c(optimalK,maxScoreK)
     
@@ -823,9 +782,7 @@ getClusterFoldChanges <- function(sam1,sam2,consensusT,s1cls,s2cls){
     sam1selected <- sam1[s1cls$clusters==consensusK[1],]
     sam2selected <- sam2[s2cls$clusters==consensusK[2],]
     
-    # it's better to compare : FC of average clone sizes between corresponding clusters
-    
-    
+
     sam1CountPerClone <- sum(sam1$COUNT) / nrow(sam1)
     sam2CountPerClone <- sum(sam2$COUNT) / nrow(sam2)
     
@@ -1121,7 +1078,7 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
       
       samClusterCentroids <- repSeqObj$withinSampleClusters[[sam]]$clusterCenters
       ntimes <- nrow(samClusterCentroids)
-      #print(nrow(samClusterCentroids))
+     
       
       rownames(samClusterCentroids) <- paste(rep(sam,ntimes),"_",rownames(samClusterCentroids),sep="")
       combinedCentroids <- rbind(combinedCentroids,samClusterCentroids)
@@ -1198,9 +1155,7 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
           removedLables <- c(removedLables,idxTobeRemoved)
         }
       }
-      #print(i)
-      #print(availSamples)
-      #print(matchingClustersInSamples)
+    
       
       if(length(removedLables) > 0){
         matchingClustersInSamples <- matchingClustersInSamples[- removedLables]
@@ -1262,9 +1217,6 @@ compareClusterAbundancesPaired <- function(sam1,sam2,clusMatchTable,s1cls,s2cls)
     sam1selected <- sam1[s1cls$clusters==consensusK[1],]
     sam2selected <- sam2[s2cls$clusters==consensusK[2],]
     
-    # it's better to compare : FC of average clone sizes between corresponding clusters
-    # to take number of clones per cluster into account
-    # Relative clonesize FC of (averageClonesize per cluster) / (averageCloneSize per totalrepertoire)
     
     sam1CountPerClone <- sum(sam1$COUNT) / nrow(sam1)
     sam2CountPerClone <- sum(sam2$COUNT) / nrow(sam2)
@@ -1350,9 +1302,6 @@ compareClusterAbundancesUnPaired <- function(repSeqObj){
     sam1selected <- sam1[s1cls$clusters==consensusK[1],]
     sam2selected <- sam2[s2cls$clusters==consensusK[2],]
     
-    # it's better to compare : FC of average clone sizes between corresponding clusters
-    # to take number of clones per cluster into account
-    # Relative clonesize FC of (averageClonesize per cluster) / (averageCloneSize per totalrepertoire)
     
     sam1CountPerClone <- sum(sam1$COUNT) / nrow(sam1)
     sam2CountPerClone <- sum(sam2$COUNT) / nrow(sam2)
@@ -1387,8 +1336,7 @@ compareClusterAbundancesUnPaired <- function(repSeqObj){
   }
   
   # calculate pvalues from permutated values
-  #print(head(clsFCs))
-  
+
   ps <- c()
   for(i in 1:ncol(clsFCsObservedPermuted)){
     
@@ -1966,11 +1914,7 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs=NUL
     avORs<-c(avORs,mors)
     avNTtoAAs<-c(avNTtoAAs,mNTtoAA)
     
-    # using the mean for the above measure is penalizing public clones a lot and favoring private DA clones
-    # we therefore give clones that are present in many samples higher weight
-    #nOfSampesForClones <- c(nOfSampesForClones,sum(as.numeric(sapply(resultlist,function(x) x[i,1]))))
-    
-    # instead now we give more weight to clones that appear in more number of samples after treatment than before
+    # we give more weight to clones that appear in more number of samples after treatment than before
    
     #nOfSampesForClonesG2 <- c(nOfSampesForClones,sum(as.numeric(sapply(resultlist,function(x) x[i,1]))[pairs==1]))
     #nOfSampesForClonesG1 <- c(nOfSampesForClones,sum(as.numeric(sapply(resultlist,function(x) x[i,1]))[pairs==0]))
@@ -2059,13 +2003,10 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     
     #Extract DA clones and association features (Vgenes etc)
     
-    #TO DO : here implement the code that extracts the DA clonotypes , use extractSubRepertoire function for this
-    
+
     samObjWithDas = extractDASubRepertoire(samObj,cutoff=clusterDaPcutoff,method="pvalue")
     
     samObj = samObjWithDas
-    
-    #muke = extractSubRepertoire(sam2Obj,subReps=c(8))
     
     samObj[4:length(samObj)]
     
@@ -2110,7 +2051,6 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   # DA clonotype ranking
   allCandidateClones <- unlist(cDaClonotypesList)
-  #findDAClonotypesInDACluster(allCandidateClones)
   commDaClones <- as.data.frame(sort(table(allCandidateClones),decreasing=T))
   colnames(commDaClones) <- "hitCOUNT"
   
