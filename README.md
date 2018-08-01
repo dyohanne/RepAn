@@ -45,6 +45,13 @@ Now we can run differential abundance analysis by passing the Repseq data object
 results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000)
 ```
 
+An example Repseq data object called CDRepseqObj prepared from PBMC TCRB CDR3 repertoire datasets of four celiac disease (CD) patient before and after a 3 day oral gluten challenge is included in RepAn. We can use is to find CD associated CDR3 sequences:
+
+```
+results <- runDaAnalysis(CDRepseqObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt=F,
+  distMethod="euclidean",matchingMethod="km",nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000)
+```
+
 Significantly differentially enriched CDR3s (with permuted p-values < 0.05), that have shown significant clonal expansion in condition 2, can be accessed from the result using :
 
 ```
