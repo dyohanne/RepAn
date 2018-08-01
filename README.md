@@ -31,7 +31,7 @@ s2T=readSample("sample2T.tsv")
 s3T=readSample("sample3T.tsv")
 ```
 
-Then prepare the vector of sample names, and run the Repseq data set up function by passing the sample name vector and the group status vector (0s for condition 1,and 1s for condition two samples). The setUp function returns a Repseq data object that contains all the samples normalized to counts per million.
+Then prepare the vector of sample names, and run the Repseq data set up function by passing the sample name vector and the group status vector (0s for condition one,and 1s for condition two samples). The setUp function returns a Repseq data object that contains all the samples normalized to counts per million.
 
 ```
 samNames=c("s1","s2","s3","s1T","s2T","s3T")
