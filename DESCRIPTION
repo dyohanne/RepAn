@@ -37,6 +37,7 @@ Imports:
     preprocessCore,
     ggseqlogo (>= 0.1),
     fclust
+LazyData: true
 RoxygenNote: 6.1.0
 Encoding: UTF-8
 
