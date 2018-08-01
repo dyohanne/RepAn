@@ -15,7 +15,7 @@ loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","
   # other probably needed packages that have been removed for now: "Rclusterpp"
   new.packages <-package.list[!(package.list %in% installed.packages()[,"Package"])]
   if(length(new.packages)) try(install.packages(new.packages))
-  lapply(eval(package.list), require, character.only=TRUE)
+  loadSuccess <- lapply(eval(package.list), require, character.only=TRUE,quietly=TRUE)
 }
 
 
@@ -24,9 +24,10 @@ loadBioconductorPacks <- function(package.list = c("Biostrings","RankProd","prep
   if(length(new.packages)){
     source("http://bioconductor.org/biocLite.R")
     biocLite(new.packages)
-    }
-  lapply(eval(package.list), require, character.only=TRUE)
+  }
+  loadSuccess <- lapply(eval(package.list), require, character.only=TRUE,quietly=TRUE)
 }
+
 
 
 #loadPacks()
