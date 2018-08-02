@@ -11,3 +11,4 @@ findOptimalClusters(repSeqObj, k, clusterby = "NT", kmerWidth = 4,
 \description{
 finds optimal clusters within samples and matches them across samples
 }
+\keyword{internal}
