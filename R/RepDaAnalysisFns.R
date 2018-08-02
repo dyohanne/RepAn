@@ -1436,7 +1436,7 @@ findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance
     tooFewSubReps <- apply(repSeqObj[[selectedAbundanceTable]],1,function(x) sum(!is.na(x[repSeqObj$group == grpLevels[1]])) > 2 & sum(!is.na(x[repSeqObj$group == grpLevels[2]])) > 2)
   }
   
-  selectedSubrepertoiresTable <- repSeqObj[[selectedAbundanceTable]][tooFewSubReps,]
+  selectedSubrepertoiresTable <- repSeqObj[[selectedAbundanceTable]][tooFewSubReps,,drop=F]
   repSeqObj = addItemToObject(repSeqObj,selectedSubrepertoiresTable,"cSelectedSubRepertoireTable")
   selectedAbundanceTable = "cSelectedSubRepertoireTable"
   
@@ -1511,7 +1511,7 @@ findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance
   
   
   # Ratio of mean cAbundances 
-  ratioAbundanceMeans = log2(rowMeans(repSeqObj[[selectedAbundanceTable]][,repSeqObj$group == grpLevels[2]],na.rm=T)/rowMeans(repSeqObj[[selectedAbundanceTable]][,repSeqObj$group == grpLevels[1]],na.rm=T))
+  ratioAbundanceMeans = log2(rowMeans(repSeqObj[[selectedAbundanceTable]][,repSeqObj$group == grpLevels[2],drop=F],na.rm=T)/rowMeans(repSeqObj[[selectedAbundanceTable]][,repSeqObj$group == grpLevels[1],drop=F],na.rm=T))
   if(testType[1]=="RankProd")
     ratioAbundanceMeans = log2(1/topSubReps$Table1[rownames(repSeqObj[[selectedAbundanceTable]]),colnames(topSubReps$Table1)=="FC:(class1/class2)"])
   
