@@ -17,7 +17,7 @@
 #' @param item is the item to be added to the repseq object
 #' @param itemName the name of the new item to be added to the repseq object
 #' @return a repSeq object with the new item added to its list of members. 
-#' @export
+#' 
 addItemToObject <- function(object,item,itemName){
   
   # replace item or add it as new item
@@ -41,7 +41,7 @@ addItemToObject <- function(object,item,itemName){
 #' @param object is a repseq object containing all repertoire sample data
 #' @param item is the name of the item checked if it exists in the repseq object
 #' @return true if the item exists in object, false if item does not exist in object
-#' @export
+#' 
 item.exists <- function(object,item){ 
   
   return(as.character(item) %in% names(object)) 
@@ -449,7 +449,7 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
 #' @param seqmers is a dataframe/matrix with observations (sequences) on the rows and features (k-mer usage frequences) on the columns
 #' @param clslabels is a vector containing cluster assignment labels for every sequence in seqmers
 #' @return a matrix with rows containing the cluster labels and columns containing an average usage frequency for each possible k-mer representing the cluster centroid.
-#' @export
+#' 
 
 getCenters <- function(seqmers,clslabels){
   clusterCenters <- NULL # holds the cluster centroids
@@ -714,11 +714,9 @@ getKmerFrequency <- function(seqs,type="NT",k=4,normForLength=F){
 
 # weigh each kmer frequency by the position where they are found.
 
-# Find starting position of kmer cdr3 sequence
-
+#' Find starting position of kmer cdr3 sequence
 #' Determine weight of kmer depending on position
-
-#' @keywords internal
+#' 
 #' 
 determineWeight <- function(kmer,seq){
   
@@ -749,8 +747,7 @@ determineWeight <- function(kmer,seq){
 # cosine distance
 
 #' cosine distance
-
-#' @keywords internal
+#' 
 #' 
 cosineDist <- function(x){
   as.dist(1 - x%*%t(x)/(sqrt(rowSums(x^2) %*% t(rowSums(x^2))))) 
@@ -759,8 +756,7 @@ cosineDist <- function(x){
 # normalized shannon entropy
 
 #' normalized shannon entropy
-
-#' @keywords internal
+#' 
 #' 
 shannonEntropy <- function(freqs){
   return(-sum(freqs * (log2(freqs)/log2(length(freqs)))))
@@ -769,8 +765,7 @@ shannonEntropy <- function(freqs){
 
 
 #' subrepertoire fold change
-
-#' @keywords internal
+#' 
 #' 
 getClusterFoldChanges <- function(sam1,sam2,consensusT,s1cls,s2cls){
   
@@ -804,8 +799,7 @@ getClusterFoldChanges <- function(sam1,sam2,consensusT,s1cls,s2cls){
 
 
 #' finds optimal clusters within samples and matches them across samples
-
-#' @keywords internal
+#' 
 #' 
 findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,distMethod="euclidean",useDynamicTreeCut=T,matchingMethod=c("hc","km","og")){
   
@@ -1004,8 +998,7 @@ findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,d
 
 
 #' find matching clusters of CDR3s
-
-#' @keywords internal
+#' 
 #' 
 getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMethod="euclidean"){
   
@@ -1173,8 +1166,7 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
 
 
 #' Find matching cluster
-
-#' @keywords internal
+#' 
 #' 
 getMatchingCluster <- function(combinedSams){
   dtocluster<- as.matrix(dist(combinedSams,diag = T,upper=T))[-1,1]
@@ -1195,8 +1187,7 @@ getMatchingCluster <- function(combinedSams){
 # This would probably be good when there are small number of samples, which is likely in Repseq studies (e.g upto 3 samples)
 
 #' compare cluster abundances for paired cases
-
-#' @keywords internal
+#' 
 #'
 compareClusterAbundancesPaired <- function(sam1,sam2,clusMatchTable,s1cls,s2cls){
   
@@ -1270,8 +1261,7 @@ compareClusterAbundancesPaired <- function(sam1,sam2,clusMatchTable,s1cls,s2cls)
 }
 
 #' compare cluster abundances for unpaired cases
-
-#' @keywords internal
+#' 
 #'
 compareClusterAbundancesUnPaired <- function(repSeqObj){
   
@@ -1359,8 +1349,7 @@ compareClusterAbundancesUnPaired <- function(repSeqObj){
 # work on the following to get differentially abundant clusters of clontoypes
 
 #' estimate the abundance of cluster of CDR3s
-
-#' @keywords internal
+#' 
 #'
 getClusterAbundancesTable<- function(repSeqObj){
   
@@ -1462,8 +1451,7 @@ getClusterAbundancesTable<- function(repSeqObj){
 
 
 #' Find differentially abundant subrepertoires
-
-#' @keywords internal
+#' 
 #'
 findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance","cRelCloneSize"),testType=c("t.test", "wilcox.test", "RankProd"), paired=F, ...){
   
@@ -1616,8 +1604,7 @@ findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance
 # extract subrepertoires of interest ........................................................................
 
 #' Extract DA subrepertoire and CDR3s contained in them
-
-#' @keywords internal
+#' 
 #'
 extractDASubRepertoire <- function(repSeqObj,cutoff=0.1,method="pvalue"){
   
@@ -1687,8 +1674,7 @@ return(repSeqObj)
 
 
 #' Extract any subrepertoire and CDR3s contained in them
-
-#' @keywords internal
+#' 
 #'
 extractSubRepertoire <- function(repSeqObj,subReps=NULL){
   
@@ -1742,8 +1728,7 @@ extractSubRepertoire <- function(repSeqObj,subReps=NULL){
 
 
 #' Find out previously known Celiac disease CDR3s among DA clonotypes detected
-
-#' @keywords internal
+#' 
 #'
 findDAClonotypesInDACluster<-function(clonotypes){
   clonotypes=as.vector(clonotypes)
@@ -1773,8 +1758,7 @@ findDAClonotypesInDACluster<-function(clonotypes){
 # fishers exact test ranking:
 
 #' perform fisher's exact test based ranking of candidate DA CDR3s
-
-#' @keywords internal
+#' 
 #'
 compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs=NULL,paired=T){
   
