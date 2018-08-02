@@ -9,4 +9,3 @@ extractDASubRepertoire(repSeqObj, cutoff = 0.1, method = "pvalue")
 \description{
 Extract DA subrepertoire and CDR3s contained in them
 }
-\keyword{internal}

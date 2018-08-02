@@ -9,4 +9,3 @@ findDAClonotypesInDACluster(clonotypes)
 \description{
 Find out previously known Celiac disease CDR3s among DA clonotypes detected
 }
-\keyword{internal}

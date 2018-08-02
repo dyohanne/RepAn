@@ -2,11 +2,12 @@
 % Please edit documentation in R/RepDaAnalysisFns.R
 \name{determineWeight}
 \alias{determineWeight}
-\title{Determine weight of kmer depending on position}
+\title{Find starting position of kmer cdr3 sequence
+Determine weight of kmer depending on position}
 \usage{
 determineWeight(kmer, seq)
 }
 \description{
+Find starting position of kmer cdr3 sequence
 Determine weight of kmer depending on position
 }
-\keyword{internal}

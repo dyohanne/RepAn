@@ -9,4 +9,3 @@ shannonEntropy(freqs)
 \description{
 normalized shannon entropy
 }
-\keyword{internal}

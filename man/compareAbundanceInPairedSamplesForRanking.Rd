@@ -10,4 +10,3 @@ compareAbundanceInPairedSamplesForRanking(samObj, freqTable,
 \description{
 perform fisher's exact test based ranking of candidate DA CDR3s
 }
-\keyword{internal}

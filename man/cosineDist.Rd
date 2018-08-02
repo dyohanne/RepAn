@@ -9,4 +9,3 @@ cosineDist(x)
 \description{
 cosine distance
 }
-\keyword{internal}

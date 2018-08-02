@@ -9,4 +9,3 @@ getClusterFoldChanges(sam1, sam2, consensusT, s1cls, s2cls)
 \description{
 subrepertoire fold change
 }
-\keyword{internal}

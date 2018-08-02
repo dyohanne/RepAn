@@ -10,4 +10,3 @@ getClusterMatches(repSeqObj, matchingMethod = c("hc", "km", "og"),
 \description{
 find matching clusters of CDR3s
 }
-\keyword{internal}

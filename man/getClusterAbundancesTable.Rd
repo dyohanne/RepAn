@@ -9,4 +9,3 @@ getClusterAbundancesTable(repSeqObj)
 \description{
 estimate the abundance of cluster of CDR3s
 }
-\keyword{internal}

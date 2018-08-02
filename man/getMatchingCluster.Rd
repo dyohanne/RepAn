@@ -9,4 +9,3 @@ getMatchingCluster(combinedSams)
 \description{
 Find matching cluster
 }
-\keyword{internal}

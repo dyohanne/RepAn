@@ -9,4 +9,3 @@ compareClusterAbundancesPaired(sam1, sam2, clusMatchTable, s1cls, s2cls)
 \description{
 compare cluster abundances for paired cases
 }
-\keyword{internal}

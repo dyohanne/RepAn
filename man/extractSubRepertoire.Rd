@@ -9,4 +9,3 @@ extractSubRepertoire(repSeqObj, subReps = NULL)
 \description{
 Extract any subrepertoire and CDR3s contained in them
 }
-\keyword{internal}

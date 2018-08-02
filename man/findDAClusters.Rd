@@ -11,4 +11,3 @@ findDAClusters(repSeqObj, abundanceType = c("cAbundance",
 \description{
 Find differentially abundant subrepertoires
 }
-\keyword{internal}

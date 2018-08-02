@@ -9,4 +9,3 @@ compareClusterAbundancesUnPaired(repSeqObj)
 \description{
 compare cluster abundances for unpaired cases
 }
-\keyword{internal}
