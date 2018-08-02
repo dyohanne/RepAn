@@ -5,6 +5,10 @@
 
 ########################### External R packages ###########################
 
+#' Attaches packages from CRAN after installing them if they don't exist already
+#' 
+#' @param package.list vector of packages
+#' 
 loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","cluster","data.table","NbClust","doParallel","dendextend","kmer","ape","Matrix","wordspace","dynamicTreeCut","e1071","fclust","randomForest","preprocessCore","gplots")){
   # other probably needed packages that have been removed for now: "Rclusterpp"
   new.packages <-package.list[!(package.list %in% installed.packages()[,"Package"])]
@@ -12,7 +16,10 @@ loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","
   loadSuccess <- lapply(eval(package.list), require, character.only=TRUE,quietly=TRUE)
 }
 
-
+#' Attaches packages from Bioconductor after installing them if they don't exist already
+#' 
+#' @param package.list vector of Bioconductor packages
+#' 
 loadBioconductorPacks <- function(package.list = c("Biostrings","RankProd","preprocessCore","msa","ggseqlogo")){
   new.packages <-package.list[!(package.list %in% installed.packages()[,"Package"])]
   if(length(new.packages)){
@@ -32,6 +39,13 @@ loadBioconductorPacks <- function(package.list = c("Biostrings","RankProd","prep
 
 
 ## read data files ####
+
+#' Read in Repertoire data (Repseq sample) in older Immunoseq format
+#' 
+#' @param samplename name of the immunoseq formatted repertoire sample (full address or in the working directory)
+#' @param cloneStatus logical; reading only productive or only unproductive CDR3s from the sample; default is productive only
+#' @return a repseq sample is returned
+#' 
 
 readSample <- function(samplename,cloneStatus="p"){
   
@@ -67,6 +81,14 @@ readSample <- function(samplename,cloneStatus="p"){
   return(sam)
   
 }
+
+
+#' Read in Repertoire data (Repseq sample) in the recent (version 3) Immunoseq format
+#' 
+#' @param samplename name of the immunoseq formatted repertoire sample (full address or in the working directory)
+#' @param cloneStatus logical; reading only productive or only unproductive CDR3s from the sample; default is productive only
+#' @return a repseq sample is returned
+#' 
 
 readSampleV2 <- function(samplename,cloneStatus="p"){
   
@@ -106,9 +128,6 @@ readSampleV2 <- function(samplename,cloneStatus="p"){
 }
 
 
-
-
-
 renameCopyTOCount <- function(samplename){
   # change some variable names
   for(rep in reps){
@@ -143,34 +162,62 @@ extractCDR3 <- function(samplename){
 
 #### Important Data related functions : eg. extract productive clones only etc. ####
 
+#' Get productive only CDR3s from a repertoire data (Repseq sample) in immunoseq format
+#' 
+#' @param rep name of the repertoire sample (which has already been read in with for example with read.table)
+#' @return a subset of the repertoire (rep) containing only productive CDR3s is returned
+#' 
+
 getProductive <- function(rep) {
   p <- rep[rep$SEQUENCESTATUS=="Productive" | rep$SEQUENCESTATUS=="In",]
   return(p)
 }
+
+#' Get unproductive CDR3s from a repertoire data (Repseq sample) in immunoseq format
+#' 
+#' @param rep name of the repertoire sample (which has already been read in with for example with read.table)
+#' @return a subset of the repertoire (rep) containing only unproductive CDR3s is returned
+#' 
 
 getUnproductive <- function(rep) {
   p <- rep[!(rep$SEQUENCESTATUS=="Productive" | rep$SEQUENCESTATUS=="In"),]
   return(p)
 }
 
-
+#' Get out of frame CDR3s from a repertoire data (Repseq sample) in immunoseq format
+#' 
+#' @param rep name of the repertoire sample (which has already been read in with for example with read.table)
+#' @return a subset of the repertoire (rep) containing only out of frame CDR3s is returned
+#' 
 getOutOfFrame <- function(rep) {
   p <- rep[rep$SEQUENCESTATUS=="Out of frame" | rep$SEQUENCESTATUS=="Out",]
   return(p)
 }
 
+#' Get stop codon containing CDR3s from a repertoire data (Repseq sample) in immunoseq format
+#' 
+#' @param rep name of the repertoire sample (which has already been read in with for example with read.table)
+#' @return a subset of the repertoire (rep) containing CDR3s with stop codon is returned
+#' 
 getHasStop <- function(rep) {
   p <- rep[rep$SEQUENCESTATUS=="Has stop" | rep$SEQUENCESTATUS=="Stop",]
   return(p)
 }
 
+#' Get CDR3s that have well defined V gene name from a repertoire data (Repseq sample) in immunoseq format
+#' 
+#' @param rep name of the repertoire sample (which has already been read in with for example with read.table)
+#' @return a subset of the repertoire (rep) containing CDR3s with well defined v gene name is returned
+#' 
 getDefined <- function(rep) {
   p <- rep[rep$VGENENAME != "(undefined)" | rep$VGENENAME!= "unresolved",]
   return(p)
 }
 
 
+
 #### Getting all V and J genes in our data:  ####
+
 
 getAllVgenes <- function(reps) 
 {

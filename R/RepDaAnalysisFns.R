@@ -10,14 +10,6 @@
 
 # General utility functions ....................................................................
 
-
-#' Adds new item to a repseq object
-#' 
-#' @param object is a repseq object containing all repertoire sample data
-#' @param item is the item to be added to the repseq object
-#' @param itemName the name of the new item to be added to the repseq object
-#' @return a repSeq object with the new item added to its list of members. 
-#' 
 addItemToObject <- function(object,item,itemName){
   
   # replace item or add it as new item
@@ -36,12 +28,6 @@ addItemToObject <- function(object,item,itemName){
 }
 
 
-#' check if item exists in repseq object
-#' 
-#' @param object is a repseq object containing all repertoire sample data
-#' @param item is the name of the item checked if it exists in the repseq object
-#' @return true if the item exists in object, false if item does not exist in object
-#' 
 item.exists <- function(object,item){ 
   
   return(as.character(item) %in% names(object)) 
@@ -480,7 +466,7 @@ getCenters <- function(seqmers,clslabels){
 #' @param distMethod the distance method used for determining distance between CDR3 feature vectors, default "euclidean"
 #' @param posWt boolean to give weights to kmer frequencies depending on their position in the CDR3
 #' @return returns an optimal k for dividing unsupervised clustering results into k compact clusters.
-#' @export
+#' 
 
 findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNClonesPerCluster=20,kmerWidth=4,posWt=T,distMethod="euclidean"){
   
@@ -636,12 +622,6 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
 }
 
 
-#' Count kmer frequencies in a CDR3
-#' 
-#' @param seqs a vector of all CDR3 sequences
-#' @param type the type of kmers, NT or AA
-#' @param k the size of k, default is 4
-#' @return data frame of sequences versus kmer counts
 
 CountkmerFrequency <- function(seqs,type="NT",k=4){
   
@@ -712,12 +692,6 @@ getKmerFrequency <- function(seqs,type="NT",k=4,normForLength=F){
 
 
 
-# weigh each kmer frequency by the position where they are found.
-
-#' Find starting position of kmer cdr3 sequence
-#' Determine weight of kmer depending on position
-#' 
-#' 
 determineWeight <- function(kmer,seq){
   
   kmerPositions = as.numeric(gregexpr(kmer,seq)[[1]])
@@ -744,29 +718,18 @@ determineWeight <- function(kmer,seq){
 }
 
 
-# cosine distance
-
-#' cosine distance
-#' 
-#' 
+ 
 cosineDist <- function(x){
   as.dist(1 - x%*%t(x)/(sqrt(rowSums(x^2) %*% t(rowSums(x^2))))) 
 }
 
-# normalized shannon entropy
 
-#' normalized shannon entropy
-#' 
-#' 
 shannonEntropy <- function(freqs){
   return(-sum(freqs * (log2(freqs)/log2(length(freqs)))))
 }
 
 
-
-#' subrepertoire fold change
-#' 
-#' 
+ 
 getClusterFoldChanges <- function(sam1,sam2,consensusT,s1cls,s2cls){
   
   clusterFc=c()
@@ -799,7 +762,7 @@ getClusterFoldChanges <- function(sam1,sam2,consensusT,s1cls,s2cls){
 
 
 #' finds optimal clusters within samples and matches them across samples
-#' 
+#' @keywords internal
 #' 
 findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,distMethod="euclidean",useDynamicTreeCut=T,matchingMethod=c("hc","km","og")){
   
@@ -997,9 +960,7 @@ findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,d
 }
 
 
-#' find matching clusters of CDR3s
-#' 
-#' 
+
 getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMethod="euclidean"){
   
 
@@ -1165,9 +1126,7 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
 }
 
 
-#' Find matching cluster
-#' 
-#' 
+
 getMatchingCluster <- function(combinedSams){
   dtocluster<- as.matrix(dist(combinedSams,diag = T,upper=T))[-1,1]
   imin <- names(which(dtocluster==min(dtocluster))) # imin holds cluster number in s2 that is closest to cluster i from samClusterCentroids.
@@ -1186,9 +1145,6 @@ getMatchingCluster <- function(combinedSams){
 
 # This would probably be good when there are small number of samples, which is likely in Repseq studies (e.g upto 3 samples)
 
-#' compare cluster abundances for paired cases
-#' 
-#'
 compareClusterAbundancesPaired <- function(sam1,sam2,clusMatchTable,s1cls,s2cls){
   
   clusterFcs=c()
@@ -1260,9 +1216,7 @@ compareClusterAbundancesPaired <- function(sam1,sam2,clusMatchTable,s1cls,s2cls)
   
 }
 
-#' compare cluster abundances for unpaired cases
-#' 
-#'
+
 compareClusterAbundancesUnPaired <- function(repSeqObj){
   
   clusterFcs=c()
@@ -1348,9 +1302,7 @@ compareClusterAbundancesUnPaired <- function(repSeqObj){
 
 # work on the following to get differentially abundant clusters of clontoypes
 
-#' estimate the abundance of cluster of CDR3s
-#' 
-#'
+
 getClusterAbundancesTable<- function(repSeqObj){
   
   
@@ -1727,9 +1679,7 @@ extractSubRepertoire <- function(repSeqObj,subReps=NULL){
 }
 
 
-#' Find out previously known Celiac disease CDR3s among DA clonotypes detected
-#' 
-#'
+
 findDAClonotypesInDACluster<-function(clonotypes){
   clonotypes=as.vector(clonotypes)
     
@@ -1755,11 +1705,8 @@ findDAClonotypesInDACluster<-function(clonotypes){
   
 }
 
-# fishers exact test ranking:
 
-#' perform fisher's exact test based ranking of candidate DA CDR3s
-#' 
-#'
+# fishers exact test ranking:
 compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs=NULL,paired=T){
   
   ### freqTable : an clone count table between sample groups, table has headers, headers 1 and 2 have the counts
