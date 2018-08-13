@@ -1915,7 +1915,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     nRepeats = 1
   }
   
-  samObjResamples = foreach(i=1:nRepeats) %dopar% {
+  samObjResamples = foreach(i=1:nRepeats,.export=c("DNAStringSet","oligonucleotideFrequency","as","sparseMatrix","dist.matrix","cutreeDynamic","silhouette","summary")) %dopar% {
     
     samObj <- scaleSamples(repSeqObj,totalReads=1e5,resample=repeatResample,resampleSize=resampleSize,useProb=useProb)
     
@@ -1982,10 +1982,13 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   # DA clonotype ranking
   allCandidateClones <- unlist(cDaClonotypesList)
-  commDaClones <- as.data.frame(sort(table(allCandidateClones),decreasing=T))
-  colnames(commDaClones) <- "hitCOUNT"
+  CandidateClFreq <- sort(table(allCandidateClones),decreasing=T)
+ 
+  commDaClones <- data.frame(hitCOUNT=as.numeric(CandidateClFreq))
+  rownames(commDaClones) <- names(CandidateClFreq)
   
-  
+  #colnames(commDaClones) <- "hitCOUNT"
+    
   
   DAClonotypeAbundanceMatrix2 = NULL
   
