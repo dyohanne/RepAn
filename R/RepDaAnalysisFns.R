@@ -663,8 +663,8 @@ CountkmerFrequency <- function(seqs,type="NT",k=4){
 getKmerFrequency <- function(seqs,type="NT",k=4,normForLength=F){
   
   if(type=="NT"){
-    seqSet <- DNAStringSet(seqs) 
-    seq_mers <- oligonucleotideFrequency(seqSet,width=k,as.prob=F)
+    seqSet <- Biostrings::DNAStringSet(seqs) 
+    seq_mers <- Biostrings::oligonucleotideFrequency(seqSet,width=k,as.prob=F)
     rownames(seq_mers) <- seqs   
     
   }else{
