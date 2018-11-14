@@ -2065,35 +2065,70 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   permutedRps <- NULL
   tempdForRandomization <- daClonotypesWithRank[,c("resampleRank","rfRank","ntaaRank","fPvalRank","fOrRank","nSamRank")]
   
-  for(i in 1:nRR){
-    tempdForRandomization <- tempdForRandomization[sample(nrow(tempdForRandomization)),]
-    tempdForRandomization <- tempdForRandomization[,sample(ncol(tempdForRandomization))]
+  # for(i in 1:nRR){
+  #   tempdForRandomization <- tempdForRandomization[sample(nrow(tempdForRandomization)),]
+  #   tempdForRandomization <- tempdForRandomization[,sample(ncol(tempdForRandomization))]
+  #   
+  #   r1 <- scaleRank(tempdForRandomization$rfRank)
+  #   r2 <- scaleRank(tempdForRandomization$resampleRank)
+  #   r3 <- scaleRank(tempdForRandomization$fPvalRank)
+  #   r4 <- scaleRank(tempdForRandomization$fOrRank)
+  #   r5 <- scaleRank(tempdForRandomization$ntaaRank)
+  #   r6 <- scaleRank(tempdForRandomization$nSamRank)
+  #   
+  #   rpst <-  r1 + r2 + r3 + r4 + r5 + r6
+  #   permutedRps <- cbind(permutedRps,rpst)
+  #   
+  # }
+  #
+  
+  # permutedEnPval <- c()
+  # for(i in 1:length(rps)){
+  #   
+  #   permutedEnPval <- c(permutedEnPval,sum(permutedRps[i,] <= rps[i]) / length(permutedRps[i,]) )
+  #   
+  # }
+  # 
+  
+  # permutedDeEnPval <- c()
+  # for(i in 1:length(rps)){
+  #   
+  #   permutedDeEnPval <- c(permutedDeEnPval,sum(permutedRps[i,] >= rps[i]) / length(permutedRps[i,]) )
+  #   
+  # }
+  # 
+  # 
+  
+  # Improved calculation of the permutation as well as p-values
+  workWithPermMatrices <- function(x){
+    tempPermTable <- as.data.frame(x)
     
-    r1 <- scaleRank(tempdForRandomization$rfRank)
-    r2 <- scaleRank(tempdForRandomization$resampleRank)
-    r3 <- scaleRank(tempdForRandomization$fPvalRank)
-    r4 <- scaleRank(tempdForRandomization$fOrRank)
-    r5 <- scaleRank(tempdForRandomization$ntaaRank)
-    r6 <- scaleRank(tempdForRandomization$nSamRank)
+    r1 <- scaleRank(tempPermTable$rfRank)
+    r2 <- scaleRank(tempPermTable$resampleRank)
+    r3 <- scaleRank(tempPermTable$fPvalRank)
+    r4 <- scaleRank(tempPermTable$fOrRank)
+    r5 <- scaleRank(tempPermTable$ntaaRank)
+    r6 <- scaleRank(tempPermTable$nSamRank)
     
     rpst <-  r1 + r2 + r3 + r4 + r5 + r6
-    permutedRps <- cbind(permutedRps,rpst)
-    
+    return(rpst)
   }
+  
+  
+  permutedRps <- lapply(1:nRR,function(x) workWithPermMatrices(tempdForRandomization[sample(nrow(tempdForRandomization)),sample(ncol(tempdForRandomization))]))
+  
   
   permutedEnPval <- c()
+  permutedDeEnPval <- c()
+  
   for(i in 1:length(rps)){
-    
-    permutedEnPval <- c(permutedEnPval,sum(permutedRps[i,] <= rps[i]) / length(permutedRps[i,]) )
+    collectedPermutedRPST <- sapply(permutedRps,function(y) y[i])
+    permutedEnPval <- c(permutedEnPval,(sum(collectedPermutedRPST <= rps[i]) + 1) / (length(collectedPermutedRPST) + 1) )
+    permutedDeEnPval <- c(permutedDeEnPval,(sum(collectedPermutedRPST >= rps[i]) + 1) / (length(collectedPermutedRPST) + 1) )
     
   }
   
-  permutedDeEnPval <- c()
-  for(i in 1:length(rps)){
-    
-    permutedDeEnPval <- c(permutedDeEnPval,sum(permutedRps[i,] >= rps[i]) / length(permutedRps[i,]) )
-    
-  }
+  
   
   
   permutedEnPval.adjusted=p.adjust(permutedEnPval, "BH") # pvals are adjusted
