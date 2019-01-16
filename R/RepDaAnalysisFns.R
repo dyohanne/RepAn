@@ -148,6 +148,25 @@ scaleSamples <- function(repSeqObj,totalReads=1e5,resample=T,resampleSize=3000,u
 
 
 
+normalizeSamples <- function(repSeqObj,totalReads=1e6){
+  
+  for(i in 1:length(names(repSeqObj$sampleData))){
+    repSeqObj$sampleData[[i]]$FREQUENCYCOUNT <- repSeqObj$sampleData[[i]]$COUNT / sum(repSeqObj$sampleData[[i]]$COUNT)
+    
+    repSeqObj$sampleData[[i]]$COUNT <- repSeqObj$sampleData[[i]]$FREQUENCYCOUNT * totalReads;
+    
+    if(item.exists(repSeqObj,"scaledSampleData")){
+      repSeqObj$scaledSampleData[[i]]$FREQUENCYCOUNT <- repSeqObj$scaledSampleData[[i]]$COUNT / sum(repSeqObj$scaledSampleData[[i]]$COUNT)
+      repSeqObj$scaledSampleData[[i]]$COUNT <- repSeqObj$scaledSampleData[[i]]$FREQUENCYCOUNT * totalReads;
+      
+    }
+  }
+  
+  return(repSeqObj)
+  
+}
+
+
 # Repseq sample scaling and normalization for background repertoires....................................................................
 
 #' Pool and resample samples to create reference/background repertoires, normalize samples to equal number of sequence reads
@@ -318,7 +337,7 @@ sampleWithFeatuersFromPooled <- function(repSeqObj,nClones,useProb=T){
 #' 
 #' @param repSeqObj is an object containing all repertoire sample data
 #' @param g a vector indicating the group to sample from, default is NULL and pools all samples from all groups, to pool samples only in group 1, g should be c(1) 
-#' @return a single resepse dataset that has all CDR3 sequences from all samples, the frequency of all CDR3s is updated depending o the original counts in the original data.
+#' @return a single repSeq dataset that has all CDR3 sequences from all samples, the frequency of all CDR3s is updated depending o the original counts in the original data.
 #' @export
 
 getPooledSamples <- function(repSeqObj,g=NULL){
@@ -352,7 +371,7 @@ getPooledSamples <- function(repSeqObj,g=NULL){
 #' @return a list containing the clonotypes,clonotypes with 4-mer usage frequencies,distance matrix between clonotypes,cluster labels for each clonotype,and cluster centroids.
 #' @export
 
-getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMethod="euclidean",useDynamicTreeCut=T){
+getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMethod="euclidean",useDynamicTreeCut=T,hcmethod="complete"){
   
  
   if(clusterby=="NT"){
@@ -401,7 +420,7 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   
 
   #print(head(dcalculated))
-  hc<-hclust(dcalculated,method="complete")
+  hc<-hclust(dcalculated,method=hcmethod)
   
 
   #clusters=cutreeDynamicTree(hc, maxTreeHeight = max(dcalculated), minModuleSize = 50)
@@ -764,7 +783,7 @@ getClusterFoldChanges <- function(sam1,sam2,consensusT,s1cls,s2cls){
 #' finds optimal clusters within samples and matches them across samples
 #' @keywords internal
 #' 
-findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,distMethod="euclidean",useDynamicTreeCut=T,matchingMethod=c("hc","km","og")){
+findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,distMethod="euclidean",useDynamicTreeCut=T,matchingMethod=c("hc","km","og"),hcmethod="complete"){
   
   # First do clustering for all samples
   withinSampleClusters = list()
@@ -777,7 +796,7 @@ findOptimalClusters <- function(repSeqObj,k,clusterby="NT",kmerWidth=4,posWt=F,d
   
   for(i in 1:length(repSeqObj$samNames)){
     
-    cResult = getClusterLables(repSeqObj$scaledSampleData[[i]],k,clusterby,kmerWidth,posWt,distMethod,useDynamicTreeCut=useDynamicTreeCut)
+    cResult = getClusterLables(repSeqObj$scaledSampleData[[i]],k,clusterby,kmerWidth,posWt,distMethod,useDynamicTreeCut=useDynamicTreeCut,hcmethod)
     
     withinSampleClusters[[length(withinSampleClusters)+1]] <- cResult
     
@@ -1860,6 +1879,542 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs=NUL
   
 }
 
+createDecoyCDR3s_V1 <- function(repSeqObj,seqType=c("NT","AA"),decoyProp=.5,randromSelect=T){
+  
+  # simulated CDR3 sequences clones taking positional frequencies of AA in random cdr3s into account
+  # Read in PBMC dataset from https://clients.adaptivebiotech.com/pub/TCRB-TCRG-comparison, and generate per position base frequencies
+  # for every cdr3 length, and simulate a sequence based on that,
+  
+  # This has to be made into a dataset that should be stored with the package.
+  
+  hc1=readSample("data/PBMC/HC014d0W.tsv")
+  hc2=readSample("data/PBMC/HC014d6W.tsv")
+  hc3=readSample("data/PBMC/HC036d0W.tsv")
+  hc4=readSample("data/PBMC/HC036d6W.tsv")
+  
+  referencePBMCdata <- rbind(hc1,hc2,hc3,hc4)
+  
+  if(seqType == "NT"){
+    referencePBMC_CDR3s <- referencePBMCdata$CDR3NT
+  }else{
+    referencePBMC_CDR3s <- referencePBMCdata$AMINOACID
+  }
+  
+  referencePBMC_CDR3s_length <- sapply(referencePBMC_CDR3s,nchar)
+  
+  
+  #CDR3length_mean <- mean(referencePBMC_CDR3s_length)
+  #CDR3length_sd <- sd(referencePBMC_CDR3s_length)
+  
+  # sample the cdr3 length from the frequency of cdr3 lengths 
+  CDR3lengthRelFreq <- table(referencePBMC_CDR3s_length)/sum(table(referencePBMC_CDR3s_length))
+  CDR3lengths <- as.numeric(names(table(referencePBMC_CDR3s_length)))
+  
+  
+  getSimulatedCDR3s <- function(n,seqType){
+    
+    
+    simulatedAAPosCDR3s <- c()
+    
+    sampledLengths <- sample(CDR3lengths,n,replace=T,prob=CDR3lengthRelFreq)
+    lidx <- 1
+    while(length(simulatedAAPosCDR3s) < n){
+      
+      #l <- round(rnorm(1,CDR3length_mean,CDR3length_sd))
+      
+      l <- sampledLengths[lidx]
+      
+      if(sum(referencePBMC_CDR3s_length==l) == 0)
+        next
+      
+      selectedReferenceCDR3s <- referencePBMC_CDR3s[referencePBMC_CDR3s_length==l]
+      
+      if(seqType == "NT"){
+        selectedReferenceCDR3_set=DNAStringSet(selectedReferenceCDR3s)
+      }else{
+        selectedReferenceCDR3_set=AAStringSet(selectedReferenceCDR3s)
+      }
+      
+      
+      selectedReferenceCDR3_pfm <- consensusMatrix(selectedReferenceCDR3_set)
+      selectedReferenceCDR3_ppm <- apply(selectedReferenceCDR3_pfm,2,function(x) x/sum(x))
+      
+      if(seqType == "NT")
+        selectedReferenceCDR3_ppm <- selectedReferenceCDR3_ppm[1:4,]
+      
+      #rownames(selectedReferenceCDR3_ppm) are the same as the AAletters
+      
+      
+      randomAA <- c()
+      for(i in 1:l){
+        AAForPos <- sample(rownames(selectedReferenceCDR3_ppm),1, replace = T,prob=selectedReferenceCDR3_ppm[,i])
+        randomAA <- c(randomAA,AAForPos)
+      }
+      sCDR3 <- paste(randomAA,collapse="")
+      simulatedAAPosCDR3s <- c(simulatedAAPosCDR3s,sCDR3)
+      
+      lidx <- lidx + 1
+    }
+    
+    
+    simulatedAAPosCDR3s
+    
+  }
+  
+  for(i in 1:length(names(repSeqObj$sampleData))){
+    
+    repSeqObj$sampleData[[i]]$seqType <- "Real"
+    tempRealD <- repSeqObj$sampleData[[i]]
+    
+    repSeqObj$scaledSampleData[[i]]$seqType <- "Real"
+    
+    
+    nClonesInSample <- nrow(repSeqObj$scaledSampleData[[i]])
+    nDecoys <- floor(nClonesInSample * decoyProp)
+    
+    
+    if(randromSelect==T){
+      
+      pooledProp <- referencePBMCdata$COUNT/sum(referencePBMCdata$COUNT)
+      
+      temp = referencePBMCdata;
+      resampledTemp = sample(temp$NUCLEOTIDE,nDecoys,replace=T,prob=pooledProp)
+      
+      resampledTempCount = sort(table(resampledTemp),decreasing=T) 
+      
+      resampledTemp = temp[match(names(resampledTempCount),temp$NUCLEOTIDE),]
+      resampledTemp$COUNT = resampledTempCount
+      resampledTemp$FREQUENCYCOUNT = resampledTempCount/sum(resampledTempCount)
+      
+      sampledDecoy = resampledTemp
+      sampledDecoy$seqType <- "Decoy"
+      
+      # remove decoy seqs that may exist in the real data
+      sampledDecoy <- sampledDecoy[!sampledDecoy$AMINOACID %in% tempRealD$AMINOACID,]
+      
+      repSeqObj$sampleData[[i]] <- rbind(tempRealD,sampledDecoy)
+      
+      repSeqObj$scaledSampleData[[i]] <- rbind(repSeqObj$scaledSampleData[[i]],sampledDecoy)
+      
+      
+      
+    }else{
+      
+      
+      tempSimSeqs <- getSimulatedCDR3s(nDecoys,seqType)
+      
+      
+      ncolsInData <- ncol(tempRealD)
+      
+      
+      if(seqType == "NT"){
+        tempSimSeqsCount <- table(tempSimSeqs)
+        tempSimSeqsAA <- suppressWarnings(translate(DNAStringSet(tempSimSeqs)))
+        
+        seqdecoy <- rep("Decoy",length(names(tempSimSeqsCount)))
+        
+        decodeData <- cbind(names(tempSimSeqsCount),names(tempSimSeqsCount),as.numeric(tempSimSeqsCount),as.character(tempSimSeqsAA),seqdecoy)
+        
+        decodeData <- cbind(decodeData,matrix(nrow=nrow(decodeData),ncol=ncolsInData-5))
+        
+        cnames <- c("NUCLEOTIDE","CDR3NT","COUNT","AMINOACID","seqType")
+        
+        colnames(decodeData) <- c("NUCLEOTIDE","CDR3NT","COUNT","AMINOACID","seqType",colnames(tempRealD)[!colnames(tempRealD) %in% cnames])
+        
+        decodeData <-  as.data.frame(decodeData[,colnames(tempRealD)])
+        
+      }else{
+        tempSimSeqsCount <- table(tempSimSeqs)
+        
+        seqdecoy <- rep("Decoy",length(names(tempSimSeqsCount)))
+        
+        
+        decodeData <- cbind(names(tempSimSeqsCount),as.numeric(tempSimSeqsCount),seqdecoy)
+        decodeData <- cbind(decodeData,matrix(nrow=nrow(decodeData),ncol=ncolsInData-3))
+        cnames <- c("AMINOACID","COUNT","seqType")
+        
+        colnames(decodeData) <- c("AMINOACID","COUNT",colnames(tempRealD)[!colnames(tempRealD) %in% cnames])
+        
+        decodeData <-  as.data.frame(decodeData[,colnames(tempRealD)])      
+        
+        
+      }
+      
+      # add decoy data to the main data
+      decodeData <- decodeData[!decodeData$AMINOACID %in% tempRealD$AMINOACID,]
+      
+      repSeqObj$sampleData[[i]] <- rbind(tempRealD,decodeData)
+      repSeqObj$sampleData[[i]]$COUNT <- as.numeric(repSeqObj$sampleData[[i]]$COUNT)
+      repSeqObj$sampleData[[i]]$FREQUENCYCOUNT <- as.numeric(repSeqObj$sampleData[[i]]$FREQUENCYCOUNT)
+      
+      # add on the resampled data as well.
+      repSeqObj$scaledSampleData[[i]] <- rbind(repSeqObj$scaledSampleData[[i]],decodeData)
+      repSeqObj$scaledSampleData[[i]]$COUNT <- as.numeric(repSeqObj$scaledSampleData[[i]]$COUNT)
+      repSeqObj$scaledSampleData[[i]]$FREQUENCYCOUNT <- as.numeric(repSeqObj$scaledSampleData[[i]]$FREQUENCYCOUNT)
+      
+    }
+    
+    
+    
+  }
+  
+  
+  return(repSeqObj)
+  
+  
+  
+}
+
+
+#' Create decoy CDR3 sequences and add to each repertoire sample
+#' 
+#' @description Function creates decoy CDR3 sequences either by random sampling from a reference repertoire or by in-silico generation per each sample
+#' @param repSeqObj is an object containing all repertoire sample data
+#' @param seqType subsequence type to consider, either NT (nucleotide) or AA (amino acid).
+#' @param decoyProp the proportion of decoy CDR3s to include in each sample (this proportion is in comparison to the resampled repertoire size for each sample). Default is 0.5.
+#' @param randromSelect Boolean; should the decoy CDR3s be randomly sampled from reference or in-silico generated. Default is random sampling from the reference.
+#' @param paired Boolean; whether samples are matched/paired.If true, and randromSelect is true, random selection of decoys for the matched samples is done from a random subset of CDR3s from the total reference.
+#' @param referenceSetFileInRDS Reference TCR CDR3 repertoire (in immunoseq format and in RDS file type) to use as a reference set. If not provided, the reference dataset would be used that comes with the package would be used.
+#' @return repSeq data Object containing repertoire samples that contain decoy CDR3 sequences
+#' 
+#' @export
+#'   
+
+createDecoyCDR3s_V2 <- function(repSeqObj,seqType=c("NT","AA"),decoyProp=.5,randromSelect=T,paired=T,referenceSetFileInRDS=NULL){
+  
+  # simulated CDR3 sequences clones taking positional frequencies of AA in random cdr3s into account
+  # Read in PBMC dataset from https://clients.adaptivebiotech.com/pub/TCRB-TCRG-comparison, and generate per position base frequencies
+  # for every cdr3 length, and simulate a sequence based on that,
+  
+  # referencePBMCdata comes with the package. 
+  nClonesPerSample=c()
+  for(ns in 1:length(names(repSeqObj$sampleData))){
+    nClonesPerSample <- c(nClonesPerSample,nrow(repSeqObj$scaledSampleData[[ns]]))
+  }
+  
+  avgClonesPerSample <- floor(sum(nClonesPerSample)/length(nClonesPerSample))
+  
+  if(is.null(referenceSetFileInRDS)){
+    referencePBMCdata_Total <- readRDS(referenceRepseqData)
+  }else{
+    referencePBMCdata_Total <- readRDS(referenceSetFileInRDS)
+  }
+  
+  #refIdx = sample(1:nrow(referencePBMCdata_Total),60000)
+  #referencePBMCdata <- referencePBMCdata_Total[refIdx,]
+  referencePBMCdata <- referencePBMCdata_Total
+  
+  # if total number of clones in reference is less than average number of clones per sample, update the decoyProp as otherwise reference clones will be sample multiple times per sample
+  # so if the real reference to per sample number of clones ratio is less than the decoyProp, make the decoyProp half of the realRefToSamRatio ratio, this allows the choice 
+  
+  realRefToSamRatio <- nrow(referencePBMCdata)/avgClonesPerSample
+  
+  decoyPropUpdated <- F
+  if(decoyProp > realRefToSamRatio){
+    cat("The average number of clonotypes in the samples is more than the available reference clonotypes. Decoy construction from the reference dataset is not recommended in this case. Set randromSelect to false to generate decoy sequences in-silico instead.")
+    cat("Decoy construction continues by reducing decoyProp..\n")
+    
+    decoyProp <- realRefToSamRatio/2
+    decoyPropUpdated <- T
+  }
+  
+  
+  if(seqType == "NT"){
+    referencePBMC_CDR3s <- referencePBMCdata$CDR3NT
+  }else{
+    referencePBMC_CDR3s <- referencePBMCdata$AMINOACID
+  }
+  
+  referencePBMC_CDR3s_length <- sapply(referencePBMC_CDR3s,nchar)
+  
+  
+  #CDR3length_mean <- mean(referencePBMC_CDR3s_length)
+  #CDR3length_sd <- sd(referencePBMC_CDR3s_length)
+  
+  # sample the cdr3 length from the frequency of cdr3 lengths 
+  CDR3lengthRelFreq <- table(referencePBMC_CDR3s_length)/sum(table(referencePBMC_CDR3s_length))
+  CDR3lengths <- as.numeric(names(table(referencePBMC_CDR3s_length)))
+  
+  
+  getSimulatedCDR3s <- function(n,seqType){
+    
+    
+    simulatedAAPosCDR3s <- c()
+    
+    sampledLengths <- sample(CDR3lengths,n,replace=T,prob=CDR3lengthRelFreq)
+    lidx <- 1
+    while(length(simulatedAAPosCDR3s) < n){
+      
+      #l <- round(rnorm(1,CDR3length_mean,CDR3length_sd))
+      
+      l <- sampledLengths[lidx]
+      
+      if(sum(referencePBMC_CDR3s_length==l) == 0)
+        next
+      
+      selectedReferenceCDR3s <- referencePBMC_CDR3s[referencePBMC_CDR3s_length==l]
+      
+      if(seqType == "NT"){
+        selectedReferenceCDR3_set=DNAStringSet(selectedReferenceCDR3s)
+      }else{
+        selectedReferenceCDR3_set=AAStringSet(selectedReferenceCDR3s)
+      }
+      
+      
+      selectedReferenceCDR3_pfm <- consensusMatrix(selectedReferenceCDR3_set)
+      selectedReferenceCDR3_ppm <- apply(selectedReferenceCDR3_pfm,2,function(x) x/sum(x))
+      
+      if(seqType == "NT")
+        selectedReferenceCDR3_ppm <- selectedReferenceCDR3_ppm[1:4,]
+      
+      #rownames(selectedReferenceCDR3_ppm) are the same as the AAletters
+      
+      
+      randomAA <- c()
+      for(i in 1:l){
+        AAForPos <- sample(rownames(selectedReferenceCDR3_ppm),1, replace = T,prob=selectedReferenceCDR3_ppm[,i])
+        randomAA <- c(randomAA,AAForPos)
+      }
+      sCDR3 <- paste(randomAA,collapse="")
+      simulatedAAPosCDR3s <- c(simulatedAAPosCDR3s,sCDR3)
+      
+      lidx <- lidx + 1
+    }
+    
+    
+    simulatedAAPosCDR3s
+    
+  }
+  
+  for(i in 1:length(names(repSeqObj$sampleData))){
+    
+    
+    nClonesInSample <- nrow(repSeqObj$scaledSampleData[[i]])
+    nDecoys <- floor(nClonesInSample * decoyProp)
+    
+    if(randromSelect==T & paired==F){
+      
+      repSeqObj$sampleData[[i]]$seqType <- "Real"
+      tempRealD <- repSeqObj$sampleData[[i]]
+      
+      repSeqObj$scaledSampleData[[i]]$seqType <- "Real"
+      
+      
+      pooledProp <- referencePBMCdata$COUNT/sum(referencePBMCdata$COUNT)
+      
+      temp = referencePBMCdata;
+      resampledTemp = sample(temp$NUCLEOTIDE,nDecoys,replace=T,prob=pooledProp)
+      
+      resampledTempCount = sort(table(resampledTemp),decreasing=T) 
+      
+      resampledTemp = temp[match(names(resampledTempCount),temp$NUCLEOTIDE),]
+      resampledTemp$COUNT = resampledTempCount
+      resampledTemp$FREQUENCYCOUNT = resampledTempCount/sum(resampledTempCount)
+      
+      sampledDecoy = resampledTemp
+      sampledDecoy$seqType <- "Decoy"
+      
+      # remove decoy seqs that may exist in the real data
+      sampledDecoy <- sampledDecoy[!sampledDecoy$AMINOACID %in% tempRealD$AMINOACID,]
+      
+      commonColNames <- intersect(colnames(sampledDecoy),colnames(tempRealD))
+      addedCols <- setdiff(colnames(tempRealD),colnames(sampledDecoy))
+      combinedCols <- c(commonColNames,addedCols)
+      
+      if(length(combinedCols) > length(commonColNames)){
+        
+        cnn <-c(colnames(sampledDecoy),addedCols)
+        sampledDecoy <- cbind(sampledDecoy,matrix(nrow=nrow(sampledDecoy),ncol=length(combinedCols)-length(commonColNames)))
+        colnames(sampledDecoy) <- cnn
+        
+      }
+      
+      sampledDecoy <- sampledDecoy[,colnames(tempRealD)]
+      
+      repSeqObj$sampleData[[i]] <- rbind(tempRealD,sampledDecoy)
+      
+      repSeqObj$scaledSampleData[[i]] <- rbind(repSeqObj$scaledSampleData[[i]],sampledDecoy)
+      
+      
+      
+    }else if(randromSelect==T & paired==T){
+      
+      #select a random set of clones for each individual from the total reference
+      numOfInd <- as.numeric(table(repSeqObj$group)[1])
+      
+      # exit from loop if i is the last indivdiual
+      if(i > numOfInd) {
+        break
+      } 
+      
+      repSeqObj$sampleData[[i]]$seqType <- "Real"
+      tempRealD <- repSeqObj$sampleData[[i]]
+      
+      repSeqObj$scaledSampleData[[i]]$seqType <- "Real"
+      
+      # if real ref to sample ratio is high (there is more data in the reference data than the samples), we use realRefToSamRatio/2 (realRefToSamRatio in this case is greater than 1)
+      # Else we use realRefToSamRatio to select presampling set for pair of samples.
+      
+      if(decoyPropUpdated==T){
+        perSamplePairClones <- floor(nrow(repSeqObj$scaledSampleData[[i]]) * realRefToSamRatio)
+      }else{
+        perSamplePairClones <- floor(nrow(repSeqObj$scaledSampleData[[i]]) * (realRefToSamRatio/4))
+      }
+      
+      tidx = sample(1:nrow(referencePBMCdata_Total),perSamplePairClones)
+      referencePBMCdataTemp <- referencePBMCdata_Total[tidx,]
+      
+      pooledProp <- referencePBMCdataTemp$COUNT/sum(referencePBMCdataTemp$COUNT)
+      
+      temp = referencePBMCdataTemp;
+      
+      resampledTemp = sample(temp$NUCLEOTIDE,nDecoys,replace=T,prob=pooledProp)
+      resampledTempCount = sort(table(resampledTemp),decreasing=T) 
+      
+      resampledTemp = temp[match(names(resampledTempCount),temp$NUCLEOTIDE),]
+      resampledTemp$COUNT = resampledTempCount
+      resampledTemp$FREQUENCYCOUNT = resampledTempCount/sum(resampledTempCount)
+      
+      sampledDecoy = resampledTemp
+      sampledDecoy$seqType <- "Decoy"
+      
+      # remove decoy seqs that may exist in the real data
+      sampledDecoy <- sampledDecoy[!sampledDecoy$AMINOACID %in% tempRealD$AMINOACID,]
+      
+      commonColNames <- intersect(colnames(sampledDecoy),colnames(tempRealD))
+      addedCols <- setdiff(colnames(tempRealD),colnames(sampledDecoy))
+      combinedCols <- c(commonColNames,addedCols)
+      
+      if(length(combinedCols) > length(commonColNames)){
+        
+        cnn <-c(colnames(sampledDecoy),addedCols)
+        sampledDecoy <- cbind(sampledDecoy,matrix(nrow=nrow(sampledDecoy),ncol=length(combinedCols)-length(commonColNames)))
+        colnames(sampledDecoy) <- cnn
+        
+      }
+      
+      sampledDecoy <- sampledDecoy[,colnames(tempRealD)]
+      
+      repSeqObj$sampleData[[i]] <- rbind(tempRealD,sampledDecoy)
+      
+      repSeqObj$scaledSampleData[[i]] <- rbind(repSeqObj$scaledSampleData[[i]],sampledDecoy)
+      
+      
+      # same job for the matching sample from the same set
+      
+      pairSamId <- i + numOfInd
+      
+      repSeqObj$sampleData[[pairSamId]]$seqType <- "Real"
+      tempRealD <- repSeqObj$sampleData[[pairSamId]]
+      repSeqObj$scaledSampleData[[pairSamId]]$seqType <- "Real"
+      
+      
+      resampledTemp = sample(temp$NUCLEOTIDE,nDecoys,replace=T,prob=pooledProp)
+      resampledTempCount = sort(table(resampledTemp),decreasing=T) 
+      
+      resampledTemp = temp[match(names(resampledTempCount),temp$NUCLEOTIDE),]
+      resampledTemp$COUNT = resampledTempCount
+      resampledTemp$FREQUENCYCOUNT = resampledTempCount/sum(resampledTempCount)
+      
+      sampledDecoy = resampledTemp
+      sampledDecoy$seqType <- "Decoy"
+      
+      # remove decoy seqs that may exist in the real data
+      sampledDecoy <- sampledDecoy[!sampledDecoy$AMINOACID %in% tempRealD$AMINOACID,]
+      
+      commonColNames <- intersect(colnames(sampledDecoy),colnames(tempRealD))
+      addedCols <- setdiff(colnames(tempRealD),colnames(sampledDecoy))
+      combinedCols <- c(commonColNames,addedCols)
+      
+      
+      if(length(combinedCols) > length(commonColNames)){
+        
+        cnn <-c(colnames(sampledDecoy),addedCols)
+        sampledDecoy <- cbind(sampledDecoy,matrix(nrow=nrow(sampledDecoy),ncol=length(combinedCols)-length(commonColNames)))
+        colnames(sampledDecoy) <- cnn
+        
+      }
+      
+      sampledDecoy <- sampledDecoy[,colnames(tempRealD)]
+      
+      repSeqObj$sampleData[[pairSamId]] <- rbind(tempRealD,sampledDecoy)
+      
+      repSeqObj$scaledSampleData[[pairSamId]] <- rbind(repSeqObj$scaledSampleData[[pairSamId]],sampledDecoy)
+      
+      
+      
+    }else{
+      
+      repSeqObj$sampleData[[i]]$seqType <- "Real"
+      tempRealD <- repSeqObj$sampleData[[i]]
+      
+      repSeqObj$scaledSampleData[[i]]$seqType <- "Real"
+      
+      
+      
+      tempSimSeqs <- getSimulatedCDR3s(nDecoys,seqType)
+      
+      
+      ncolsInData <- ncol(tempRealD)
+      
+      
+      if(seqType == "NT"){
+        tempSimSeqsCount <- table(tempSimSeqs)
+        tempSimSeqsAA <- suppressWarnings(translate(DNAStringSet(tempSimSeqs)))
+        
+        seqdecoy <- rep("Decoy",length(names(tempSimSeqsCount)))
+        
+        decodeData <- cbind(names(tempSimSeqsCount),names(tempSimSeqsCount),as.numeric(tempSimSeqsCount),as.character(tempSimSeqsAA),seqdecoy)
+        
+        decodeData <- cbind(decodeData,matrix(nrow=nrow(decodeData),ncol=ncolsInData-5))
+        
+        cnames <- c("NUCLEOTIDE","CDR3NT","COUNT","AMINOACID","seqType")
+        
+        colnames(decodeData) <- c("NUCLEOTIDE","CDR3NT","COUNT","AMINOACID","seqType",colnames(tempRealD)[!colnames(tempRealD) %in% cnames])
+        
+        decodeData <-  as.data.frame(decodeData[,colnames(tempRealD)])
+        
+      }else{
+        tempSimSeqsCount <- table(tempSimSeqs)
+        
+        seqdecoy <- rep("Decoy",length(names(tempSimSeqsCount)))
+        
+        
+        decodeData <- cbind(names(tempSimSeqsCount),as.numeric(tempSimSeqsCount),seqdecoy)
+        decodeData <- cbind(decodeData,matrix(nrow=nrow(decodeData),ncol=ncolsInData-3))
+        cnames <- c("AMINOACID","COUNT","seqType")
+        
+        colnames(decodeData) <- c("AMINOACID","COUNT",colnames(tempRealD)[!colnames(tempRealD) %in% cnames])
+        
+        decodeData <-  as.data.frame(decodeData[,colnames(tempRealD)])      
+        
+        
+      }
+      
+      # add decoy data to the main data
+      decodeData <- decodeData[!decodeData$AMINOACID %in% tempRealD$AMINOACID,]
+      
+      repSeqObj$sampleData[[i]] <- rbind(tempRealD,decodeData)
+      repSeqObj$sampleData[[i]]$COUNT <- as.numeric(repSeqObj$sampleData[[i]]$COUNT)
+      repSeqObj$sampleData[[i]]$FREQUENCYCOUNT <- as.numeric(repSeqObj$sampleData[[i]]$FREQUENCYCOUNT)
+      
+      # add on the resampled data as well.
+      repSeqObj$scaledSampleData[[i]] <- rbind(repSeqObj$scaledSampleData[[i]],decodeData)
+      repSeqObj$scaledSampleData[[i]]$COUNT <- as.numeric(repSeqObj$scaledSampleData[[i]]$COUNT)
+      repSeqObj$scaledSampleData[[i]]$FREQUENCYCOUNT <- as.numeric(repSeqObj$scaledSampleData[[i]]$FREQUENCYCOUNT)
+      
+    }
+    
+    
+    
+  }
+  
+  
+  return(repSeqObj)
+  
+  
+  
+}
 
 
 # Run DA analysis function :  .........................................................................
@@ -1891,7 +2446,7 @@ compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs=NUL
 #' @examples results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=2,resampleSize=1000,useProb=T,returnAll=T,nRR=1000)
 #' 
 #' @export
-# 
+#' 
 runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod=c("euclidean","cosine"),useDynamicTreeCut=T,matchingMethod="km",repeatResample=T,nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000){
   
   clusterby <- toupper(clusterby)
@@ -1907,7 +2462,6 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   registerDoParallel(cores=detectCores())  
   
-  cDaClonotypesList <- list()
   
   if(repeatResample==T){
     nRepeats = nRepeats
@@ -1915,9 +2469,20 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     nRepeats = 1
   }
   
+  
+  # a copy of the raw data to hold decoy CDR3s resulting from each resample run
+  repSeqObjWith_decoyCDR3s <- repSeqObj
+  for(s in names(repSeqObjWith_decoyCDR3s$sampleData)){
+    repSeqObjWith_decoyCDR3s$sampleData[[s]]$seqType="Real"
+  }
+  
+  
+  
   samObjResamples = foreach(i=1:nRepeats,.export=c("DNAStringSet","oligonucleotideFrequency","as","sparseMatrix","dist.matrix","cutreeDynamic","silhouette","summary")) %dopar% {
     
     samObj <- scaleSamples(repSeqObj,totalReads=1e5,resample=repeatResample,resampleSize=resampleSize,useProb=useProb)
+    
+    samObj <- createDecoyCDR3s_V2(samObj,clusterby,decoyProp=1,randromSelect=T,paired)
     
     if(useDynamicTreeCut==T){
       samObjWithClusters = findOptimalClusters(samObj,k=NULL,clusterby,kmerWidth,positionWt,distMethod,useDynamicTreeCut=useDynamicTreeCut,matchingMethod=matchingMethod)
@@ -1939,20 +2504,65 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     
     samObj = samObjWithDas
     
+    #collect decoys
+    if(item.exists(samObj,"cDaClonotypes")){
+      
+      decoyDetectedRecordsList<- list()
+      realToDecoyRateList<- list()
+      
+      samObj <- addItemToObject(samObj,decoyDetectedRecordsList,"decoyDetectedRecordsList")
+      samObj <- addItemToObject(samObj,realToDecoyRateList,"realToDecoyRateList")
+      
+      for(s in names(samObj$sampleData)){
+        
+        decoyDetectedRecords <- samObj$sampleData[[s]][(samObj$sampleData[[s]]$AMINOACID %in% samObj$cDaClonotypes) & samObj$sampleData[[s]]$seqType=="Decoy",]
+        
+        # filter out decoys that may exist in the real datasets
+        decoyDetectedRecords <- decoyDetectedRecords[!decoyDetectedRecords$AMINOACID %in% samObj$sampleData[[s]][samObj$sampleData[[s]]$seqType=="Real",]$AMINOACID,] 
+        
+        realToDecoyRate <- sum(samObj$scaledSampleData[[s]]$seqType=="Real")/sum(samObj$scaledSampleData[[s]]$seqType=="Decoy")
+        
+        samObj$decoyDetectedRecordsList[[s]] <- decoyDetectedRecords
+        samObj$realToDecoyRateList[[s]] <- realToDecoyRate
+        
+      }
+      
+    }
+    
+    
+
+    
     samObj[4:length(samObj)]
     
   }
   
-  # collect DA clones from all subsample runs
+  
+  # collect DA clones from all subsample runs, and information related to each run
+  cDaClonotypesList <- list()
+  #real to decoy rate
+  realToDecoyRates <- c()
+  cDaClonotypesWithSubrepertoires <- NULL
+  
+  # normalize the raw dataset to count per million values (not the resampled data). This counts are to be used for the ranking and filtering steps that follow.
+  #repSeqObjWith_decoyCDR3s <- normalizeSamples(repSeqObjWith_decoyCDR3s,totalReads=1e6)
   
   for(i in 1:length(samObjResamples)){
     
     if(item.exists(samObjResamples[[i]],"cDaClusters")){
       cDaClonotypesList[[i]] <- samObjResamples[[i]]$cDaClonotypes
+      cDaClonotypesWithSubrepertoires <- rbind(cDaClonotypesWithSubrepertoires,cbind(samObjResamples[[i]]$cDaClonotypesWithCluster[,1],paste(samObjResamples[[i]]$cDaClonotypesWithCluster[,2],i,sep="_")))
+      
+      realToDecoyRates <- c(realToDecoyRates,as.numeric(unlist(samObjResamples[[i]]$realToDecoyRateList)))
+      
+      # and add decoys detected in the resample run to the main dataset
+      for(nmm in names(samObjResamples[[i]]$decoyDetectedRecordsList)){
+        repSeqObjWith_decoyCDR3s$sampleData[[nmm]] <- rbind(repSeqObjWith_decoyCDR3s$sampleData[[nmm]],
+                                                            samObjResamples[[i]]$decoyDetectedRecordsList[[nmm]])
+      }
       
     }
-    
   }
+  
   
   
   allCandidateClones <- unlist(cDaClonotypesList)
@@ -1991,16 +2601,25 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     
   
   DAClonotypeAbundanceMatrix2 = NULL
+  RealDecoyInformation <- NULL
   
-  for(s in names(repSeqObj$sampleData)){
+  for(s in names(repSeqObjWith_decoyCDR3s$sampleData)){
     
-    DAClonotypeAbundanceMatrix2 = cbind(DAClonotypeAbundanceMatrix2,repSeqObj$sampleData[[s]][match(rownames(commDaClones),repSeqObj$sampleData[[s]]$AMINOACID),c("COUNT")])
+    # datempdata <- samObj$sampleData[[s]][match(rownames(commDaClones),samObj$sampleData[[s]]$AMINOACID),]
+    # DAClonotypeAbundanceMatrix2 <- 
+    # 
+    DAClonotypeAbundanceMatrix2 = cbind(DAClonotypeAbundanceMatrix2,repSeqObjWith_decoyCDR3s$sampleData[[s]][match(rownames(commDaClones),repSeqObjWith_decoyCDR3s$sampleData[[s]]$AMINOACID),c("COUNT")])
+    RealDecoyInformation = cbind(RealDecoyInformation,repSeqObjWith_decoyCDR3s$sampleData[[s]][match(rownames(commDaClones),repSeqObjWith_decoyCDR3s$sampleData[[s]]$AMINOACID),c("seqType")])
+    
     
   }
   
   rownames(DAClonotypeAbundanceMatrix2) = rownames(commDaClones)
   colnames(DAClonotypeAbundanceMatrix2) = names(repSeqObj$sampleData)
   DAClonotypeAbundanceMatrix2[is.na(DAClonotypeAbundanceMatrix2)] <- 0
+  
+  RealAndDecoys <- apply(RealDecoyInformation,1,function(x) ifelse(sum(x=="Real",na.rm=T)>0 ,"Real","Decoy"))
+  
   
   # # select DA clones that show at least one incidence of increased abundance across the samples
   # selectedDAClonesIdx <- apply(DAClonotypeAbundanceMatrix2,1,function(x) sum((x[repSeqObj$group == unique(repSeqObj$group)[2]]/x[repSeqObj$group == unique(repSeqObj$group)[1]]) < 1,na.rm=T) == 0)
@@ -2012,6 +2631,40 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   # decide enriched and de-enriched using the rank, with out selecting for increasing clones as commented above
   
   DAClonotypeAbundanceMatrix2_selected <- round(DAClonotypeAbundanceMatrix2)
+  
+  # set clones that exist as real in some samples but decoy in others to zero in the decoy cases; otherwise they make rank calculation of nsamples biased.
+  # this is for those that are considered Real clones and happen to be decoys in some samples.
+  
+  updateIdx <- which(apply(RealDecoyInformation,1,function(x) (sum(x == "Real",na.rm =T) > 0) & (sum(x == "Decoy",na.rm =T) > 0 )))
+  
+  for(idx in updateIdx){
+    DAClonotypeAbundanceMatrix2_selected[idx,][RealDecoyInformation[idx,]=="Decoy"] <- 0
+  }
+  
+  
+  # MAIN CHANGE HERE:  a cut off of total minimum count of numSamples across samples is used here. The FDR works ok for enrichment always, okish for deenrichment after
+  # this filtering..since most decoys get filtered out at this point. Now run this using many more reference sequences...for all samples.
+  
+  # remove records that have only counts of 1 or below per sample
+  # Then minimum total has to be 10 across samples.
+  
+  #min count across samples: 2 per clone in sample * number of samples
+  numSamples <- ncol(DAClonotypeAbundanceMatrix2_selected)
+  minCountCutoff <- 1 * numSamples
+  
+  rmvIdx <- apply(DAClonotypeAbundanceMatrix2_selected,1,function(x) sum(x) >= minCountCutoff)
+  DAClonotypeAbundanceMatrix2_selected <- DAClonotypeAbundanceMatrix2_selected[rmvIdx,]
+  
+  
+  RealAndDecoys <- RealAndDecoys[rmvIdx]
+  
+  
+  # Since clones may be grouped with different subrepertoire labels in each subsample run (even if they end up in the same cluster in multiple resample runs),
+  # we check how often they ended up together, and output all subrepertoire lables at each resample run as subrepertoire_resampleRun separated by ;
+  
+  
+  subRep_resampleRun <- sapply(rownames(DAClonotypeAbundanceMatrix2_selected),function(x) paste(unique(cDaClonotypesWithSubrepertoires[which(cDaClonotypesWithSubrepertoires[,1] == x),2]),collapse=";"))
+  
   
   
   # ranking: highest count given top rank for repeat resamples
@@ -2034,20 +2687,39 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   rfRank <- as.numeric(factor(-varimp[,1]))
   
   
-  fishExactRes <- compareAbundanceInPairedSamplesForRanking(repSeqObj,DAClonotypeAbundanceMatrix2_selected,repSeqObj$group,paired)
+  fishExactRes <- compareAbundanceInPairedSamplesForRanking(repSeqObjWith_decoyCDR3s,DAClonotypeAbundanceMatrix2_selected,repSeqObjWith_decoyCDR3s$group,paired)
   
-  fishExactRes$ntaaRank <- as.numeric(factor(-fishExactRes[,1]))
-  fishExactRes$pvalRank <- as.numeric(factor(fishExactRes[,2]))
-  fishExactRes$orRank <- as.numeric(factor(-fishExactRes[,3])) # taking log2 to get symmetric OR values
-  fishExactRes$nSamRank <- as.numeric(factor(-fishExactRes[,4]))
-  
-  daClonotypesWithRank <- data.frame(DAClonotypeAbundanceMatrix2_selected,resampleRank,rfRank,ntaaRank=fishExactRes$ntaaRank,fpval=fishExactRes[,2],fPvalRank=fishExactRes$pvalRank,fOr=fishExactRes[,3],fOrRank=fishExactRes$orRank,nSamRank=fishExactRes$nSamRank)
   
   # combine rankings
   scaleRank <- function(r){
     return((r-min(r)) / (max(r)-min(r)))
   }
   
+  # Improved calculation of the permutation as well as p-values
+  workWithPermMatrices <- function(x){
+    tempPermTable <- as.data.frame(x)
+    
+    r1 <- scaleRank(tempPermTable$rfRank)
+    r2 <- scaleRank(tempPermTable$resampleRank)
+    r3 <- scaleRank(tempPermTable$fPvalRank)
+    r4 <- scaleRank(tempPermTable$fOrRank)
+    r5 <- scaleRank(tempPermTable$ntaaRank)
+    r6 <- scaleRank(tempPermTable$nSamRank)
+    
+    rpst <-  r1 + r2 + r3 + r4 + r5 + r6
+    return(rpst)
+  }
+  
+  
+  
+  fishExactRes$ntaaRank <- as.numeric(factor(-fishExactRes[,1]))
+  fishExactRes$pvalRank <- as.numeric(factor(fishExactRes[,2]))
+  fishExactRes$orRank <- as.numeric(factor(-fishExactRes[,3])) # taking log2 to get symmetric OR values
+  fishExactRes$nSamRank <- as.numeric(factor(-fishExactRes[,4]))
+  
+  daClonotypesWithRank <- data.frame(DAClonotypeAbundanceMatrix2_selected,subRep_resampleRun,resampleRank,rfRank,ntaaRank=fishExactRes$ntaaRank,fpval=fishExactRes[,2],fPvalRank=fishExactRes$pvalRank,fOr=fishExactRes[,3],fOrRank=fishExactRes$orRank,nSamRank=fishExactRes$nSamRank)
+  
+ 
   r1 <- scaleRank(daClonotypesWithRank$rfRank)
   r2 <- scaleRank(daClonotypesWithRank$resampleRank)
   r3 <- scaleRank(daClonotypesWithRank$fPvalRank)
@@ -2099,58 +2771,124 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   # 
   # 
   
-  # Improved calculation of the permutation as well as p-values
-  workWithPermMatrices <- function(x){
-    tempPermTable <- as.data.frame(x)
-    
-    r1 <- scaleRank(tempPermTable$rfRank)
-    r2 <- scaleRank(tempPermTable$resampleRank)
-    r3 <- scaleRank(tempPermTable$fPvalRank)
-    r4 <- scaleRank(tempPermTable$fOrRank)
-    r5 <- scaleRank(tempPermTable$ntaaRank)
-    r6 <- scaleRank(tempPermTable$nSamRank)
-    
-    rpst <-  r1 + r2 + r3 + r4 + r5 + r6
-    return(rpst)
-  }
-  
-  
   permutedRps <- lapply(1:nRR,function(x) workWithPermMatrices(tempdForRandomization[sample(nrow(tempdForRandomization)),sample(ncol(tempdForRandomization))]))
   
   
   permutedEnPval <- c()
-  permutedDeEnPval <- c()
-  
+
   for(i in 1:length(rps)){
     collectedPermutedRPST <- sapply(permutedRps,function(y) y[i])
     permutedEnPval <- c(permutedEnPval,(sum(collectedPermutedRPST <= rps[i]) + 1) / (length(collectedPermutedRPST) + 1) )
-    permutedDeEnPval <- c(permutedDeEnPval,(sum(collectedPermutedRPST >= rps[i]) + 1) / (length(collectedPermutedRPST) + 1) )
+
+  }
+  
+
+  # Assessing de-enrichment
+  
+  resampleRankDeEn = as.numeric(factor(selected_commDaClones[,1])) #high num of detection in resamples is high rank for enrichment, low is high rank for de-enrichment
+  rfRankDeEn <- as.numeric(factor(varimp[,1])) # high group separation capacity is high rank for enrichment, low group separation capacity is high rank for de-enrichment
+  
+  fishExactRes$ntaaRank <- as.numeric(factor(fishExactRes[,1])) # high nt to aa ratio is high rank for enrichment(high rank..1 and close to 1), low nt to aa ratio is high rank for de-enrichment
+  fishExactRes$pvalRank <- as.numeric(factor(fishExactRes[,2])) # very low pvalue is ranked highly for both enrichment and de-enrichment
+  fishExactRes$orRank <- as.numeric(factor(fishExactRes[,3])) # high odds ratio (group2/group1) is high rank for enrichment, low odds ratio (group2/group1) is high rank for de-enrichment
+  fishExactRes$nSamRank <- as.numeric(factor(fishExactRes[,4])) # being seen in multiple samples is high rank for enrichment, detection in small number of samples is high rank for de-enrichment
+  
+  daClonotypesWithRankDeEn <- data.frame(DAClonotypeAbundanceMatrix2_selected,subRep_resampleRun,resampleRankDeEn,rfRankDeEn,ntaaRank=fishExactRes$ntaaRank,fpval=fishExactRes[,2],fPvalRank=fishExactRes$pvalRank,fOr=fishExactRes[,3],fOrRank=fishExactRes$orRank,nSamRank=fishExactRes$nSamRank)
+  
+  r1DeEn <- scaleRank(daClonotypesWithRankDeEn$rfRank)
+  r2DeEn <- scaleRank(daClonotypesWithRankDeEn$resampleRank)
+  r3DeEn <- scaleRank(daClonotypesWithRankDeEn$fPvalRank)
+  r4DeEn <- scaleRank(daClonotypesWithRankDeEn$fOrRank)
+  r5DeEn <- scaleRank(daClonotypesWithRankDeEn$ntaaRank)
+  r6DeEn <- scaleRank(daClonotypesWithRankDeEn$nSamRank)
+  
+  # rps is between 0 and 6, small rps means high enrichment, high rps means low enrichment
+  rpsDeEn <- r1DeEn + r2DeEn + r3DeEn + r4DeEn + r5DeEn + r6DeEn
+  rpRanksDeEn <- as.numeric(factor(rpsDeEn))
+  
+  daClonotypesWithRankDeEn$rpRanks <- rpRanksDeEn
+  
+  #shuffle and calculate rpRanks
+  tempdForRandomizationDeEn <- daClonotypesWithRankDeEn[,c("resampleRankDeEn","rfRankDeEn","ntaaRank","fPvalRank","fOrRank","nSamRank")]
+  
+  permutedRpsDeEn <- lapply(1:nRR,function(x) workWithPermMatrices(tempdForRandomizationDeEn[sample(nrow(tempdForRandomizationDeEn)),sample(ncol(tempdForRandomizationDeEn))]))
+  
+  permutedDeEnPval <- c()
+  
+  for(i in 1:length(rpsDeEn)){
+    collectedPermutedRPSTDeEn <- sapply(permutedRpsDeEn,function(y) y[i])
+    permutedDeEnPval <- c(permutedDeEnPval,(sum(collectedPermutedRPSTDeEn <= rpsDeEn[i]) + 1) / (length(collectedPermutedRPSTDeEn) + 1) )
     
   }
   
   
   
+  #permutedEnPval.adjusted=p.adjust(permutedEnPval, "BH") # pvals are adjusted
+  #permutedDeEnPval.adjusted=p.adjust(permutedDeEnPval, "BH") # pvals are adjusted
   
-  permutedEnPval.adjusted=p.adjust(permutedEnPval, "BH") # pvals are adjusted
-  permutedDeEnPval.adjusted=p.adjust(permutedDeEnPval, "BH") # pvals are adjusted
-  
+
   #enrichment pvalues
   daClonotypesWithRank$permutedEnPval <- permutedEnPval
-  daClonotypesWithRank$permutedEnPval.adjusted <- permutedEnPval.adjusted
+  #daClonotypesWithRank$permutedEnPval.adjusted <- permutedEnPval.adjusted
   
   #deEnrichment pvalues
   daClonotypesWithRank$permutedDeEnPval <- permutedDeEnPval
-  daClonotypesWithRank$permutedDeEnPval.adjusted <- permutedDeEnPval.adjusted
+  #daClonotypesWithRank$permutedDeEnPval.adjusted <- permutedDeEnPval.adjusted
+  
+  
+  
+  # Calculate decoy-based FDR for enrichment
+  
+  #add real And decoy information
+  daClonotypesWithRank$RorDecoy <- RealAndDecoys
+  daClonotypesWithRankDeEn$RorDecoy <- RealAndDecoys
   
   DaClonotypesWithRank.pvalOrdered <- daClonotypesWithRank[order(daClonotypesWithRank$permutedEnPval,decreasing=F),]
+  DaClonotypesWithRankDeEn.pvalOrdered <- daClonotypesWithRankDeEn[order(daClonotypesWithRankDeEn$permutedDeEnPval,decreasing=F),]
   
   
+  # since similar level of false positives are expected..we multiply by 2 the number of false positives. 
+  # i.e if we detect 10 decoys at a certain row, # of false positives is taken as 2 * 10. But this 
+  # is true when the amount of target and decoys are similar in the data. In our case they may not be, we we can actually multiply
+  # the number of decoys by the real to decoy clones in the data. This is obtained above were the resample runs are done.
+  
+  # we apply this rule only after the number of decoys in the hit list reaches above realToDecRate
+  
+  realToDecRate <- round(mean(realToDecoyRates)) + 1
+  #realToDecRate = 1
+  
+  
+  # we are using the formula (#decoy * realToDecRate) /#target, for FDR calculation ... we increase #decoy by realToDecRate since real vs decoy seqs are not even in the original datasets
+  #FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) (sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") * realToDecRate) / sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
+  FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) ifelse(sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") < realToDecRate, sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy"),realToDecRate * sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy")) / sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
+  DaClonotypesWithRank.pvalOrdered$FDRfromDecoy <- FDRfromDecoy
+  
+  # at 5% fdr at pvalue 0.05 cut off
+  # We calculate qvalue and get clones with qvalue less than 0.05 and pvalue less than 0.05
+  # http://www.inf.fu-berlin.de/lehre/WS14/ProteomicsWS14/LUS/lu7c/433/index.html
+  # The qvalue is the minimal FDR level at which a particular clone can be accepted as a hit
+  
+  qvalue <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) min(DaClonotypesWithRank.pvalOrdered[x:nrow(DaClonotypesWithRank.pvalOrdered),]$FDRfromDecoy))
+  DaClonotypesWithRank.pvalOrdered$qvalue <- qvalue
+  
+  # For de-enrichment
+  #FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRankDeEn.pvalOrdered),function(x) (sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") * realToDecRate) / sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
+  
+  FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRankDeEn.pvalOrdered),function(x) ifelse(sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") < realToDecRate, sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy"),realToDecRate * sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy")) / sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
+  DaClonotypesWithRankDeEn.pvalOrdered$FDRfromDecoy <- FDRfromDecoy
+  
+  qvalue <- sapply(1:nrow(DaClonotypesWithRankDeEn.pvalOrdered),function(x) min(DaClonotypesWithRankDeEn.pvalOrdered[x:nrow(DaClonotypesWithRankDeEn.pvalOrdered),]$FDRfromDecoy))
+  DaClonotypesWithRankDeEn.pvalOrdered$qvalue <- qvalue
+  
+  
+ 
   if(returnAll==T){
-    toRet <- list(DaClonotypesWithRank.pvalOrdered,samObjResamples)
-    names(toRet) <- c("DaClonotypes","nRepeatResults")
+    toRet <- list(DaClonotypesWithRank.pvalOrdered,DaClonotypesWithRankDeEn.pvalOrdered,samObjResamples)
+    names(toRet) <- c("DaClonotypes","DaDeEnClonotypes","nRepeatResults")
   }else{
-    toRet <- DaClonotypesWithRank.pvalOrdered
+    toRet <- list(DaClonotypesWithRank.pvalOrdered,DaClonotypesWithRankDeEn.pvalOrdered)
   }
+  
   
   return(toRet)
 }
@@ -2160,18 +2898,19 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
 
 #' Extract top differentially abundant CDR3 sequences 
 #' 
-#' This function extracts condition associated CDR3s given the result of the runDaAnalysis function with a given p-value cutoff
+#' This function extracts condition associated CDR3s given the result of the runDaAnalysis function with a given q-value and p-value cutoff
 #' 
 #' @param candidateList the list of candidate DA CDR3s, the return value of runDaAnalysis function
 #' @param enriched logical; true returns differentially enriched CDR3s, false returns differentially de-enriched CDR3s. Default is true
 #' @param pValueCutoff the cutoff p-value, default is 0.05
-#' @return function returns a data frame of the candidate CDR3s that have significant p-value, that is below the pValueCutoff
+#' @param qvalue the cutoff q-value to use, default is 0.05
+#' @return function returns a data frame of the candidate CDR3s that have significant q-values with p-values below the pValueCutoff
 #' 
-#' @examples TopDAClonotypes(results,enriched=T,pValueCutoff=0.05) # results is an object holding the result of running runDaAnalysis
+#' @examples TopDAClonotypes(results,enriched=T,pValueCutoff=0.05,qvalue=0.05) # results is an object holding the result of running runDaAnalysis
 #' 
 #' @export
 #' 
-TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05){
+TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05,qvalue=0.05){
  
   if(is.data.frame(candidateList)){
      if(nrow(candidateList) > 0){
@@ -2179,18 +2918,23 @@ TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05){
      }else{
        stop("The list does not contain any candidate CDR3s.")
      }
-  }else if(nrow(candidateList[[1]]) > 0){
-    candidateCDR3s <- candidateList[[1]]
-  }else{
-    stop("The list does not contain any candidate CDR3s.")
+  }else if(enriched==T){
+    if(nrow(candidateList[[1]]) > 0){
+      candidateCDR3s <- candidateList[[1]]
+      daCDR3s <- candidateCDR3s[candidateCDR3s$qvalue < qvalue & candidateCDR3s$permutedEnPval < pValueCutoff & candidateCDR3s$RorDecoy=="Real",]
+    }else{
+      stop("The list does not contain any candidate CDR3s.")
+    }
+  }else if(enriched!=T){
+    if(nrow(candidateList[[2]]) > 0){
+      candidateCDR3s <- candidateList[[2]]
+      daCDR3s <- candidateCDR3s[candidateCDR3s$qvalue < qvalue & candidateCDR3s$permutedDeEnPval < pValueCutoff & candidateCDR3s$RorDecoy=="Real",]
+
+    }else{
+      stop("The list does not contain any candidate CDR3s.")
+    }
   }
   
-  if(enriched==T){
-    daCDR3s <- candidateCDR3s[candidateCDR3s$permutedEnPval < pValueCutoff,]
-  }else{
-    daCDR3s <- candidateCDR3s[candidateCDR3s$permutedDeEnPval < pValueCutoff,]
-    
-  }
   
   daCDR3s 
 

@@ -20,3 +20,9 @@ samNames=c("CD005d0W","CD006d0W","CD011d0W","CD039d0W","CD005d6W","CD006d6W","CD
 CDRepseqObj <- setUp(sampleNames=samNames,samGroup=c(0,0,0,0,1,1,1,1))
 
 devtools::use_data(CDRepseqObj, overwrite = TRUE)
+
+
+# Prepare reference CDR3 dataset
+referenceRepseqData <- readRDS("/wrk/dawit/TCRanalysis/data/referencePBMCdata.rds")
+
+devtools::use_data(referenceRepseqData, overwrite = TRUE)

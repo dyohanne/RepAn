@@ -4,7 +4,8 @@
 \alias{TopDAClonotypes}
 \title{Extract top differentially abundant CDR3 sequences}
 \usage{
-TopDAClonotypes(candidateList, enriched = T, pValueCutoff = 0.05)
+TopDAClonotypes(candidateList, enriched = T, pValueCutoff = 0.05,
+  qvalue = 0.05)
 }
 \arguments{
 \item{candidateList}{the list of candidate DA CDR3s, the return value of runDaAnalysis function}
@@ -12,14 +13,16 @@ TopDAClonotypes(candidateList, enriched = T, pValueCutoff = 0.05)
 \item{enriched}{logical; true returns differentially enriched CDR3s, false returns differentially de-enriched CDR3s. Default is true}
 
 \item{pValueCutoff}{the cutoff p-value, default is 0.05}
+
+\item{qvalue}{the cutoff q-value to use, default is 0.05}
 }
 \value{
-function returns a data frame of the candidate CDR3s that have significant p-value, that is below the pValueCutoff
+function returns a data frame of the candidate CDR3s that have significant q-values with p-values below the pValueCutoff
 }
 \description{
-This function extracts condition associated CDR3s given the result of the runDaAnalysis function with a given p-value cutoff
+This function extracts condition associated CDR3s given the result of the runDaAnalysis function with a given q-value and p-value cutoff
 }
 \examples{
-TopDAClonotypes(results,enriched=T,pValueCutoff=0.05) # results is an object holding the result of running runDaAnalysis
+TopDAClonotypes(results,enriched=T,pValueCutoff=0.05,qvalue=0.05) # results is an object holding the result of running runDaAnalysis
 
 }

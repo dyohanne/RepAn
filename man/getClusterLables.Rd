@@ -5,7 +5,8 @@
 \title{This function performs pairwise 4-mer nt usage clustering of clonotypes in repSeq data}
 \usage{
 getClusterLables(sam, k = 10, clusterby = "NT", kmerWidth = 4,
-  posWt = F, distMethod = "euclidean", useDynamicTreeCut = T)
+  posWt = F, distMethod = "euclidean", useDynamicTreeCut = T,
+  hcmethod = "complete")
 }
 \arguments{
 \item{sam}{a repertoire data (of only productive clonotypes,immunoseq format) for whose clonotypes are going to be clustered based on 4-mer usage frequencies.}

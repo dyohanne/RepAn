@@ -6,7 +6,7 @@
 \usage{
 findOptimalClusters(repSeqObj, k, clusterby = "NT", kmerWidth = 4,
   posWt = F, distMethod = "euclidean", useDynamicTreeCut = T,
-  matchingMethod = c("hc", "km", "og"))
+  matchingMethod = c("hc", "km", "og"), hcmethod = "complete")
 }
 \description{
 finds optimal clusters within samples and matches them across samples

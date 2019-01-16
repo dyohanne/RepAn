@@ -12,7 +12,7 @@ getPooledSamples(repSeqObj, g = NULL)
 \item{g}{a vector indicating the group to sample from, default is NULL and pools all samples from all groups, to pool samples only in group 1, g should be c(1)}
 }
 \value{
-a single resepse dataset that has all CDR3 sequences from all samples, the frequency of all CDR3s is updated depending o the original counts in the original data.
+a single repSeq dataset that has all CDR3 sequences from all samples, the frequency of all CDR3s is updated depending o the original counts in the original data.
 }
 \description{
 Pool all repertoires

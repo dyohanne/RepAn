@@ -2712,7 +2712,7 @@ compareUsageInTwoSamples<-function(freqTable,pcutoff=0.05){
 }
 
 
-compareAbundanceInTwoSamplesForShared<-function(freqTable,pcutoff=0.05){
+compareAbundanceInTwoSamplesForShared<-function(freqTable,pcutoff=0.05,sharedClonesOnly=T,minTotalAbundance=100){
   sam=freqTable
   pvals=c()
   ORs=c()
@@ -2720,7 +2720,11 @@ compareAbundanceInTwoSamplesForShared<-function(freqTable,pcutoff=0.05){
   
   print(head(sam))
   
-  sharedClonesIndices = apply(sam,1,function(x) (sum(x>0) == 2))
+  if(sharedClonesOnly==T){
+    sharedClonesIndices = apply(sam,1,function(x) (sum(x>0) == 2 & sum(x) >= minTotalAbundance))
+  }else{
+    sharedClonesIndices = apply(sam,1,function(x) (sum(x) >= minTotalAbundance))
+  }
   
   sharedCloneIndices = which(sharedClonesIndices)
   numOfShared = length(sharedCloneIndices)
@@ -2825,7 +2829,7 @@ compareAbundanceInPairedSamples<-function(freqTable,pcutoff=0.01,pairs,writeResu
   rnds = length(pairs)/2
   for (k in 1:rnds){
     kpair = k + rnds
-    res=compareAbundanceInTwoSamplesForShared(sam[,c(k,kpair)])
+    res=compareAbundanceInTwoSamplesForShared(sam[,c(k,kpair)],sharedClonesOnly=F)
     colnames(res) <- c(paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"padjusted",sep="_"),paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"OR",sep="_"),paste(colnames(sam[,c(k,kpair)])[1],colnames(sam[,c(k,kpair)])[2],"CI",sep="_"))
     
     print(str(res[,1]))
