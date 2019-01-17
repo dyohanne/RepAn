@@ -64,7 +64,7 @@ setUp <- function(sampleNames=NULL,samGroup=NULL,normToCPM=T){
     repSeqObj$sampleData[[i]] <- repSeqObj$sampleData[[i]][!repSeqObj$sampleData[[i]]$COUNT < 0,]
     
     # remove clonotypes with a length of less than 3
-    tooShortAA <- sapply(repSeqObj$sampleData[[i]]$AMINOACID,nchar) # some samples have too short AA clones which are only 2 AA long, shorter than the kmer length 3 we are working with, we just remove them, they are most likely errors.
+    tooShortAA <- sapply(repSeqObj$sampleData[[i]]$AMINOACID,nchar) # some samples have too short AA clones which are only 2 AA long, shorter than the kmer length 3 we are working with, we just remove them, they are most likely erroneous.
     repSeqObj$sampleData[[i]] <- repSeqObj$sampleData[[i]][!(tooShortAA < 3),]
     
     
@@ -411,7 +411,7 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   }
   
  
-  #print(head(seq_mers))
+
   
   
   #dcalculated <- dist(seq_mers)
@@ -419,7 +419,7 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   #dcalculated <- dist.matrix(seq_mers, method="cosine", convert=T, as.dist=TRUE)
   
 
-  #print(head(dcalculated))
+ 
   hc<-hclust(dcalculated,method=hcmethod)
   
 
@@ -575,7 +575,7 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
     doParallel::registerDoParallel(cores=detectCores())  
     
     
-    # evaluate ks from 5-maxK based on silhouette and data compression 
+    # evaluate ks to-maxK based on silhouette and data compression 
     
     ks_sils = foreach(i=1:10,.export=c('silhouette','summary','cosineDist'),.packages='cluster',.combine=rbind) %dopar% {
       
@@ -588,7 +588,7 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
       seqmersResampled <- seq_mers
       dcalculated <- dist.matrix(seqmersResampled, method=distMethod, convert=T, as.dist=TRUE)
         
-      hc<-hclust(dcalculated,method="complete")  # it was average linkage, but it did not work well
+      hc<-hclust(dcalculated,method="complete") 
       
      
       sils <- c()
@@ -1159,7 +1159,7 @@ getMatchingCluster <- function(combinedSams){
 # differential abundance testing for matching clusters across sample groups/conditions ............................................................
 
 # TO DO : following two functions are not for now used for DA testing. They are supposed to do the testing for each subrepetoire by
-# performing permutation of cluster assignment labels in the withinSampleCluster assignments. This is not the same as the findDAClusters function which 
+# performing permutation of cluster assignment labels in the withinSampleCluster assignments. This is not the same as the runAnalysis function which 
 # instead implements the comparison based on abundance information gathered for matching clusters and then using standard statistical tests used for differential expression analysis. 
 
 # This would probably be good when there are small number of samples, which is likely in Repseq studies (e.g upto 3 samples)
@@ -1317,9 +1317,6 @@ compareClusterAbundancesUnPaired <- function(repSeqObj){
 }
 
 
-
-
-# work on the following to get differentially abundant clusters of clontoypes
 
 
 getClusterAbundancesTable<- function(repSeqObj){
@@ -1697,32 +1694,6 @@ extractSubRepertoire <- function(repSeqObj,subReps=NULL){
   
 }
 
-
-
-findDAClonotypesInDACluster<-function(clonotypes){
-  clonotypes=as.vector(clonotypes)
-    
-  imp_clones_qiao <- read.table("Important clones qiao.txt", header=T, sep="\t",dec = ",")
-  imp_clones_qiao=unique(as.vector(imp_clones_qiao[,1]))
-  
-  imp_clones_arnold1<- read.table("Important clones Arnold_CD4_gluten reactive.txt", header=T, sep="\t",dec = ",") 
-  imp_clones_arnold1=unique(as.vector(imp_clones_arnold1[,1]))
-  
-  imp_clones_arnold2<- read.table("Important clones Arnold_CD8_isolated from challenged patients.txt", header=T, sep="\t",dec = ",") 
-  imp_clones_arnold2=unique(as.vector(imp_clones_arnold2[,1]))
-  
-  imp_clones_arnold_total=c(as.vector(imp_clones_arnold1),as.vector(imp_clones_arnold2))
-  
-  imp_clones_petersen <- read.table("Important clones Petersen.txt", header=T, sep="\t",dec = ",")
-  imp_clones_petersen=unique(as.vector(imp_clones_petersen[,8]))
-  
-  knownClones <- unique(c(imp_clones_qiao,imp_clones_arnold1,imp_clones_arnold2,imp_clones_petersen))
-  
-  found_in_knownclones=clonotypes[clonotypes %in% knownClones]
- 
-  return(found_in_knownclones)
-  
-}
 
 
 # fishers exact test ranking:
@@ -2641,7 +2612,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   # this filtering..since most decoys get filtered out at this point. Now run this using many more reference sequences...for all samples.
   
   # remove records that have only counts of 1 or below per sample
-  # Then minimum total has to be 10 across samples.
+  # Then minimum total has to be minimum across samples.
   
   #min count across samples: 2 per clone in sample * number of samples
   numSamples <- ncol(DAClonotypeAbundanceMatrix2_selected)
@@ -2668,7 +2639,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   
   
-  #... ranking the DA clonotypes: here use RF and fisher's exact based approach for each clone, write this !!
+  #... ranking the DA clonotypes: 
   # using randomForest
   clonecountM_class=as.data.frame(t(DAClonotypeAbundanceMatrix2_selected))
   classes=factor(repSeqObj$group)
@@ -2844,7 +2815,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   # since similar level of false positives are expected..we multiply by 2 the number of false positives. 
   # i.e if we detect 10 decoys at a certain row, # of false positives is taken as 2 * 10. But this 
-  # is true when the amount of target and decoys are similar in the data. In our case they may not be, we we can actually multiply
+  # is true when the amount of target and decoys are similar in the data. In our case they may not be, we multiply
   # the number of decoys by the real to decoy clones in the data. This is obtained above were the resample runs are done.
   
   # we apply this rule only after the number of decoys in the hit list reaches above realToDecRate
@@ -2858,9 +2829,6 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) ifelse(sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") < realToDecRate, sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy"),realToDecRate * sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy")) / sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
   DaClonotypesWithRank.pvalOrdered$FDRfromDecoy <- FDRfromDecoy
   
-  # at 5% fdr at pvalue 0.05 cut off
-  # We calculate qvalue and get clones with qvalue less than 0.05 and pvalue less than 0.05
-  # http://www.inf.fu-berlin.de/lehre/WS14/ProteomicsWS14/LUS/lu7c/433/index.html
   # The qvalue is the minimal FDR level at which a particular clone can be accepted as a hit
   
   qvalue <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) min(DaClonotypesWithRank.pvalOrdered[x:nrow(DaClonotypesWithRank.pvalOrdered),]$FDRfromDecoy))

@@ -8,7 +8,7 @@ referred to as sub-repertoires, it applies statistcal testing to identify difffe
 the abundances of sub-repertoires between condition groups. CDR3 sequences belonging to DA sub-repertoires are collected and 
 put through ranking based filtering to identify most likely condition associated CDR3 sequences. 
 
-For detailed description of the differential abundance analysis method, please see (link)
+For detailed description of the differential abundance analysis method, please see (https://www.biorxiv.org/content/early/2018/12/07/490102)
 
 To install RepAn package in R, first install R devtools package and run its install_github function as follows: 
 
@@ -52,23 +52,24 @@ results <- runDaAnalysis(CDRepseqObj,clusterby="NT",kmerWidth=4,paired=T,cluster
   distMethod="euclidean",matchingMethod="km",nRepeats=5,resampleSize=3000,useProb=T,returnAll=T,nRR=1000)
 ```
 
-Significantly differentially enriched CDR3s (with permuted p-values < 0.05), that have shown significant clonal expansion in condition 2, can be accessed from the result using :
+Significantly differentially enriched CDR3s (with permuted p-values < 0.05 and qvalue < 0.05), that have shown significant clonal expansion in condition 2, can be accessed from the result using :
 
 ```
-enrichedCDR3s <- TopDAClonotypes(results,enriched=T,pValueCutoff=0.05)
+enrichedCDR3s <- TopDAClonotypes(results,enriched=T,pValueCutoff=0.05,qvalue=0.05)
 ```
 
-Significantly differentially de-enriched CDR3s (with permuted p-values < 0.05), that have shown significant clonal contraction in condition 2, can be accessed from the result using :
+Significantly differentially de-enriched CDR3s (with permuted p-values < 0.05 and qvalue < 0.05), that have shown significant clonal contraction in condition 2, can be accessed from the result using :
 
 ```
-de-enrichedCDR3s <- TopDAClonotypes(results,enriched=F,pValueCutoff=0.05)
+de-enrichedCDR3s <- TopDAClonotypes(results,enriched=F,pValueCutoff=0.05,qvalue=0.05)
 ```
 
 
-RepAn also implements basic functions for descriptive analysis of immune repertoire datasets that enable:
-- basic repertoire summary and statistics analysis 
+RepAn also contains basic functions for descriptive analysis of immune repertoire datasets that enable:
+- basic repertoire summary and statistical analysis 
 - repertoire overlap analysis
 - repertoire diversity analysis
-- etc.
+- V- and J- gene usage analysis
+
 
 
