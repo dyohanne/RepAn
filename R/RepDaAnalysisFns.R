@@ -2873,7 +2873,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
 #' 
 #' @export
 #' 
-TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05,qvalue=0.05){
+TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05,qValue=0.05){
  
   if(is.data.frame(candidateList)){
      if(nrow(candidateList) > 0){
@@ -2884,14 +2884,14 @@ TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05,qvalue=0.
   }else if(enriched==T){
     if(nrow(candidateList[[1]]) > 0){
       candidateCDR3s <- candidateList[[1]]
-      daCDR3s <- candidateCDR3s[candidateCDR3s$qvalue < qvalue & candidateCDR3s$permutedEnPval < pValueCutoff & candidateCDR3s$RorDecoy=="Real",]
+      daCDR3s <- candidateCDR3s[candidateCDR3s$qvalue < qValue & candidateCDR3s$permutedEnPval < pValueCutoff & candidateCDR3s$RorDecoy=="Real",]
     }else{
       stop("The list does not contain any candidate CDR3s.")
     }
   }else if(enriched!=T){
     if(nrow(candidateList[[2]]) > 0){
       candidateCDR3s <- candidateList[[2]]
-      daCDR3s <- candidateCDR3s[candidateCDR3s$qvalue < qvalue & candidateCDR3s$permutedDeEnPval < pValueCutoff & candidateCDR3s$RorDecoy=="Real",]
+      daCDR3s <- candidateCDR3s[candidateCDR3s$qvalue < qValue & candidateCDR3s$permutedDeEnPval < pValueCutoff & candidateCDR3s$RorDecoy=="Real",]
 
     }else{
       stop("The list does not contain any candidate CDR3s.")
