@@ -14,7 +14,27 @@ License: GPL-3
 Depends:
     R (>= 2.15.1),
     Matrix (>= 1.2-7.1),
-    doParallel (>= 1.0.10)
+    dynamicTreeCut,
+    ggplot2 (>= 1.0.0),
+    cluster (>= 2.0.5),
+    Biostrings (>= 2.38.4),
+    RankProd (>= 2.42.0),
+    doParallel (>= 1.0.10),
+    parallel,
+    preprocessCore (>= 1.32.0),
+    randomForest (>= 4.6-12),
+    gplots (>= 3.0.1),
+    wordspace (>= 0.2-0),
+    e1071 (>= 1.6-7),
+    data.table (>= 1.9.6),
+    gplots (>= 3.0.1),
+    kmer (>= 1.0.2),
+    dendextend (>= 1.3.0),
+    ape (>= 5.1),
+    RankProd,
+    preprocessCore,
+    ggseqlogo (>= 0.1),
+    fclust
 biocViews:
 Imports:
     dynamicTreeCut,
