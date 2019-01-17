@@ -13,7 +13,7 @@ Description: RepAn mainly performs differential abundance analysis by comparing 
 License: GPL-3
 Depends:
     R (>= 2.15.1),
-    Matrix (>= 1.2-7.1)
+    Matrix (>= 1.2-7.1),
     doParallel (>= 1.0.10)
 biocViews:
 Imports:
