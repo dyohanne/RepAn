@@ -2095,7 +2095,7 @@ createDecoyCDR3s_V2 <- function(repSeqObj,seqType=c("NT","AA"),decoyProp=.5,rand
   avgClonesPerSample <- floor(sum(nClonesPerSample)/length(nClonesPerSample))
   
   if(is.null(referenceSetFileInRDS)){
-    referencePBMCdata_Total <- readRDS(referenceRepseqData)
+    referencePBMCdata_Total <- readRDS("data/referencePBMCdata.rds")
   }else{
     referencePBMCdata_Total <- readRDS(referenceSetFileInRDS)
   }
