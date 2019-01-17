@@ -345,7 +345,7 @@ getPooledSamples <- function(repSeqObj,g=NULL){
   scaledSampleData = list()
   
   if(is.null(g)){
-    g=repObj$group
+    g=repSeqObj$group
   }
   pooledRep <- NULL
   
