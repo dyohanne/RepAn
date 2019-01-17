@@ -13,7 +13,7 @@ runDaAnalysis(repSeqObj, clusterby = "NT", kmerWidth = 4, paired = T,
 \arguments{
 \item{repSeqObj}{is an object containing all repertoire sample data}
 
-\item{clusterby}{boolean; subsequence type to consider, either NT (nucleotide) or AA (amino acid), default is NT}
+\item{clusterby}{boolean; subsequence type to consider, either NT (nucleotide) or AA (amino acid)}
 
 \item{kmerWidth}{subsequence width to use, default is 4 for NT, and 3 for AA clusterby}
 

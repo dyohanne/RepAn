@@ -2420,7 +2420,7 @@ createDecoyCDR3s_V2 <- function(repSeqObj,seqType=c("NT","AA"),decoyProp=.5,rand
 #' performs within sample unsupervised clustering using subsequence frequency based unsupervised clustering, matches the clusters to their closest match across samples, and performs differential abundance testing at the level of matching
 #' clusters to identify differentially abundant condition associated CDR3 sequences
 #' @param repSeqObj is an object containing all repertoire sample data
-#' @param clusterby boolean; subsequence type to consider, either NT (nucleotide) or AA (amino acid), default is NT
+#' @param clusterby boolean; subsequence type to consider, either NT (nucleotide) or AA (amino acid).
 #' @param kmerWidth subsequence width to use, default is 4 for NT, and 3 for AA clusterby
 #' @param paired boolean; whether to perform paired analysis for matched datasets,default is true. 
 #' @param clusterDaPcutoff sub-repertoire level differential abundance testing cut off, default is 0.1. This works well for our test cases. 
@@ -2446,14 +2446,14 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   clusterby <- toupper(clusterby)
   if(!clusterby %in% c("NT","AA"))
-    stop("clusterby is not given. Given one of NT or AA.")
+    stop("clusterby is not given. Give one of NT or AA.")
   
   if(!matchingMethod %in% c("hc","km","og"))
-    stop("matchingMethod is not given. Given one of hc, km or og.")
+    stop("matchingMethod is not given. Give one of hc, km or og.")
   
   distMethod <- tolower(distMethod)
   if(!distMethod %in% c("euclidean","cosine"))
-    stop("distMethod not given. Given one of euclidean or cosine. For better result use euclidean when clustering by NT, and cosine when clustering by AA.")
+    stop("distMethod not given. Give one of euclidean or cosine. For better result use euclidean when clustering by NT, and cosine when clustering by AA.")
   
   registerDoParallel(cores=detectCores())  
   
@@ -2827,7 +2827,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   #daClonotypesWithRank$permutedEnPval.adjusted <- permutedEnPval.adjusted
   
   #deEnrichment pvalues
-  daClonotypesWithRank$permutedDeEnPval <- permutedDeEnPval
+  daClonotypesWithRankDeEn$permutedDeEnPval <- permutedDeEnPval
   #daClonotypesWithRank$permutedDeEnPval.adjusted <- permutedDeEnPval.adjusted
   
   
