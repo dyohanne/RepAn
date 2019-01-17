@@ -1885,14 +1885,8 @@ createDecoyCDR3s_V1 <- function(repSeqObj,seqType=c("NT","AA"),decoyProp=.5,rand
   # Read in PBMC dataset from https://clients.adaptivebiotech.com/pub/TCRB-TCRG-comparison, and generate per position base frequencies
   # for every cdr3 length, and simulate a sequence based on that,
   
-  # This has to be made into a dataset that should be stored with the package.
-  
-  hc1=readSample("data/PBMC/HC014d0W.tsv")
-  hc2=readSample("data/PBMC/HC014d6W.tsv")
-  hc3=readSample("data/PBMC/HC036d0W.tsv")
-  hc4=readSample("data/PBMC/HC036d6W.tsv")
-  
-  referencePBMCdata <- rbind(hc1,hc2,hc3,hc4)
+  # reading reference data referenceRepseqData already available with the package.
+  referencePBMCdata <- referenceRepseqData
   
   if(seqType == "NT"){
     referencePBMC_CDR3s <- referencePBMCdata$CDR3NT
@@ -2095,7 +2089,8 @@ createDecoyCDR3s_V2 <- function(repSeqObj,seqType=c("NT","AA"),decoyProp=.5,rand
   avgClonesPerSample <- floor(sum(nClonesPerSample)/length(nClonesPerSample))
   
   if(is.null(referenceSetFileInRDS)){
-    referencePBMCdata_Total <- readRDS("data/referencePBMCdata.rds")
+    #referencePBMCdata_Total <- readRDS("data/referencePBMCdata.rds")
+    referencePBMCdata_Total <- referenceRepseqData
   }else{
     referencePBMCdata_Total <- readRDS(referenceSetFileInRDS)
   }
