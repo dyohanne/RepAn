@@ -53,6 +53,9 @@ setUp <- function(sampleNames=NULL,samGroup=NULL,normToCPM=T){
   if(length(sampleNames) != length(samGroup))
     stop("The number of samples must be equal to the number of group labels.")
   
+  sampleNames <- sampleNames[c(which(samGroup==levels(factor(samGroup))[1]),which(samGroup==levels(factor(samGroup))[2]))]
+  samGroup <- samGroup[c(which(samGroup==levels(factor(samGroup))[1]),which(samGroup==levels(factor(samGroup))[2]))]
+  
   sd = lapply(sampleNames,function(x) get(x))
   
   repSeqObj <- list(sampleData=sd,samNames=sampleNames,group=samGroup)
@@ -375,11 +378,11 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   
  
   if(clusterby=="NT"){
-    seqs <- unique(sam$CDR3NT) # use extracted CDR3 NT sequence 
+    seqs <- sam$CDR3NT # use extracted CDR3 NT sequence 
     seq_mers <- getKmerFrequency(seqs,type="NT",k=kmerWidth)
      
   }else{
-    seqs <- unique(sam$AMINOACID) # use AA
+    seqs <- sam$AMINOACID # use AA
     seq_mers <- getKmerFrequency(seqs,type="AA",k=kmerWidth)
   }
   
@@ -1053,7 +1056,7 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
       ntimes <- nrow(samClusterCentroids)
      
       
-      rownames(samClusterCentroids) <- paste(rep(sam,ntimes),"_",rownames(samClusterCentroids),sep="")
+      rownames(samClusterCentroids) <- paste(rep(sam,ntimes),"Clusterlbl",rownames(samClusterCentroids),sep="")
       combinedCentroids <- rbind(combinedCentroids,samClusterCentroids)
       
     }
@@ -1068,7 +1071,8 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
     
     for(j in minKacrossSamples:maxKacrossSamples){
       
-      centroidKmcls <- kmeans(combinedCentroids,maxKacrossSamples,iter.max = 50,nstart = 50)
+      #centroidKmcls <- kmeans(combinedCentroids,maxKacrossSamples,iter.max = 50,nstart = 50)
+      centroidKmcls <- kmeans(combinedCentroids,j,iter.max = 50,nstart = 50)
       
       sicentroid <- cluster::silhouette(centroidKmcls$cluster,combinedCentroidsdist)
       avgSilWidth <- summary(sicentroid)$avg.width
@@ -1109,8 +1113,8 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
     
     for(i in 1:length(table(centroidKmcls$cluster))){
       tempCentroidClustMem <- centroidKmcls$cluster[centroidKmcls$cluster==i]
-      availSamples <- sapply(names(tempCentroidClustMem),function(x) strsplit(x,"_")[[1]][1])
-      matchingClustersInSamples <- sapply(names(tempCentroidClustMem),function(x) strsplit(x,"_")[[1]][2])
+      availSamples <- sapply(names(tempCentroidClustMem),function(x) strsplit(x,"Clusterlbl")[[1]][1])
+      matchingClustersInSamples <- sapply(names(tempCentroidClustMem),function(x) strsplit(x,"Clusterlbl")[[1]][2])
       # merge within sample clusters if they are matching the same other cluster in another sample
       # so merging happens if matching clusters across samples involve more than one cluster per sample at least in one case
       removedLables <- c()
@@ -1421,7 +1425,7 @@ getClusterAbundancesTable<- function(repSeqObj){
 #' Find differentially abundant subrepertoires
 #' 
 #'
-findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance","cRelCloneSize"),testType=c("t.test", "wilcox.test", "RankProd"), paired=F, ...){
+findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance","cRelCloneSize"),testType=c("t.test", "wilcox.test", "RankProd"),minNumPerGroup=3,paired=F, ...){
   
   
   # testing implemented only for paired and unpaired two group comparison for now.
@@ -1445,11 +1449,11 @@ findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance
   
   # subselect subrepertoires that will be used for testing based on their existence
   
-  # first remove subrepertoires that exist only in one or 0 samples per group
+  # first remove subrepertoires that exist only in one or 0 samples per group (here set to three samples per group)
   if(paired==T){
-    tooFewSubReps <- apply(repSeqObj[[selectedAbundanceTable]],1,function(x) sum(!is.na(x[repSeqObj$group == grpLevels[2]] / x[repSeqObj$group == grpLevels[1]]) ) > 2)
+    tooFewSubReps <- apply(repSeqObj[[selectedAbundanceTable]],1,function(x) sum(!is.na(x[repSeqObj$group == grpLevels[2]] / x[repSeqObj$group == grpLevels[1]]) ) >= minNumPerGroup)
   }else{
-    tooFewSubReps <- apply(repSeqObj[[selectedAbundanceTable]],1,function(x) sum(!is.na(x[repSeqObj$group == grpLevels[1]])) > 2 & sum(!is.na(x[repSeqObj$group == grpLevels[2]])) > 2)
+    tooFewSubReps <- apply(repSeqObj[[selectedAbundanceTable]],1,function(x) sum(!is.na(x[repSeqObj$group == grpLevels[1]])) >= minNumPerGroup & sum(!is.na(x[repSeqObj$group == grpLevels[2]])) >= minNumPerGroup)
   }
   
   selectedSubrepertoiresTable <- repSeqObj[[selectedAbundanceTable]][tooFewSubReps,,drop=F]
@@ -1506,8 +1510,8 @@ findDAClusters <- function(repSeqObj,abundanceType=c("cAbundance","cRelAbundance
         
         if(testType[1]=="t.test"){selectedTest = t.test}
         if(testType[1]=="wilcox.test"){selectedTest = wilcox.test}
-        pval=apply(repSeqObj[[selectedAbundanceTable]],1,function(x)selectedTest(x[repSeqObj$group == grpLevels[1]],x[repSeqObj$group == grpLevels[2]],paired=paired,na.rm=T,...)$p.value)
-      
+        pval=apply(repSeqObj[[selectedAbundanceTable]],1,function(x) suppressWarnings(as.numeric(try(selectedTest(x[repSeqObj$group == grpLevels[1]],x[repSeqObj$group == grpLevels[2]],paired=paired,na.rm=T,...)$p.value,silent=T))))
+        
       }
     
 
@@ -1697,7 +1701,7 @@ extractSubRepertoire <- function(repSeqObj,subReps=NULL){
 
 
 # fishers exact test ranking:
-compareAbundanceInPairedSamplesForRanking <- function(samObj,freqTable,pairs=NULL,paired=T){
+compareAbundanceInSamplesForRanking <- function(samObj,freqTable,pairs=NULL,paired=T){
   
   ### freqTable : an clone count table between sample groups, table has headers, headers 1 and 2 have the counts
   sam = round(freqTable)
@@ -2165,10 +2169,24 @@ createDecoyCDR3s_V2 <- function(repSeqObj,seqType=c("NT","AA"),decoyProp=.5,rand
       
       repSeqObj$scaledSampleData[[i]]$seqType <- "Real"
       
+      # To create a reference world for each sample (since samples are not  paired) from which we randomly draw decoys,
+      # if real ref to sample ratio is high (there is more data in the reference data than the samples), 
+      # we use realRefToSamRatio/2 (realRefToSamRatio in this case is greater than 1)
+      # Else we use realRefToSamRatio to select presampling set for pair of samples.
       
-      pooledProp <- referencePBMCdata$COUNT/sum(referencePBMCdata$COUNT)
+      if(decoyPropUpdated==T){
+        perSampleClones <- floor(nrow(repSeqObj$scaledSampleData[[i]]) * realRefToSamRatio)
+      }else{
+        perSampleClones <- floor(nrow(repSeqObj$scaledSampleData[[i]]) * (realRefToSamRatio/4))
+      }
       
-      temp = referencePBMCdata;
+      tidx = sample(1:nrow(referencePBMCdata_Total),perSampleClones)
+      referencePBMCdataTemp <- referencePBMCdata_Total[tidx,]
+      
+      pooledProp <- referencePBMCdataTemp$COUNT/sum(referencePBMCdataTemp$COUNT)
+      
+      temp = referencePBMCdataTemp;
+      
       resampledTemp = sample(temp$NUCLEOTIDE,nDecoys,replace=T,prob=pooledProp)
       
       resampledTempCount = sort(table(resampledTemp),decreasing=T) 
@@ -2404,16 +2422,17 @@ createDecoyCDR3s_V2 <- function(repSeqObj,seqType=c("NT","AA"),decoyProp=.5,rand
 #' @param nRepeats number of repeat resample runs to perform if repeatResample is true, default is 10
 #' @param resampleSize the downsampling size in the repeat resample runs. default is 5000 
 #' @param useProb boolean; if true, probabilistic sampling is performed for downsampling with most frequenty CDR3s being more likely to be resampled. If false, all CDR3s have equal chance of being resampled. Default is true.
-#' @param returnAll boolean; if true, the function returns a list whose first element is a data frame with information on the candidate differentially abundant CDR3s and second element is the intermediate results for all repeat resamples. 
-#' If false, the intermediate results fro all runs are not returned, only a data frame with candidate differentially abundant CDR3s and their filterig results is returned.
+#' @param returnAll boolean; if true, the function returns a list whose first and second elements candidate CDR3s from differentially abundant subrepertoires along with their ranking statistics, the third element contains the directory where all intermediate repeat resample resuls are written. 
+#' If false, the intermediate results' address is not returned.
 #' @param nRR the number of permutations to perform in the ranking step of candidate DA CDR3s to determine statistical significance.
+#' @param analysisName prefix to the directory name in which intermediate results from resample runs will be written.
 #' @return a data frame with all candidate DA CDR3s if returnAll is false, a list with data frame of candidate DA CDR3s and all intermediate results if returnAll is true.
 #' 
 #' @examples results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=2,resampleSize=1000,useProb=T,returnAll=T,nRR=1000)
 #' 
 #' @export
 #' 
-runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod=c("euclidean","cosine"),useDynamicTreeCut=T,matchingMethod="km",repeatResample=T,nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000){
+runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,minNumPerGroup=3,clusterTestType="t.test",clusterDaPcutoff=0.1,positionWt = F,distMethod=c("euclidean","cosine"),useDynamicTreeCut=T,matchingMethod="km",repeatResample=T,nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000,analysisName=NULL){
   
   clusterby <- toupper(clusterby)
   if(!clusterby %in% c("NT","AA"))
@@ -2421,6 +2440,10 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   if(!matchingMethod %in% c("hc","km","og"))
     stop("matchingMethod is not given. Give one of hc, km or og.")
+  
+  if(! clusterTestType %in% c("t.test", "wilcox.test", "RankProd"))
+    stop("Test type to evaulate subrepertoire DA not given. Give one of t.test, wilcox.test or RankProd. Default is t.test")
+  
   
   distMethod <- tolower(distMethod)
   if(!distMethod %in% c("euclidean","cosine"))
@@ -2442,6 +2465,11 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     repSeqObjWith_decoyCDR3s$sampleData[[s]]$seqType="Real"
   }
   
+  #fnxsInEnv <- as.vector(lsf.str())
+  forDirName <- paste(analysisName,repSeqObj$samNames[1],clusterby,nRepeats,"ResampleRunResults",sep="_")
+  dir.create(forDirName, showWarnings = FALSE)
+  
+  
   
   
   samObjResamples = foreach(i=1:nRepeats,.export=c("DNAStringSet","oligonucleotideFrequency","as","sparseMatrix","dist.matrix","cutreeDynamic","silhouette","summary")) %dopar% {
@@ -2458,7 +2486,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     }
     
     # Find DA clusters 
-    samObj = findDAClusters(samObjWithClusters,abundanceType="cAbundance",testType="t.test",paired=paired) # first option
+    samObj = findDAClusters(samObjWithClusters,abundanceType="cAbundance",testType=clusterTestType,minNumPerGroup=minNumPerGroup,paired=paired) # first option
     #samObj = findDAClusters(samObjWithClusters,abundanceType="cAbundance",testType="RankProd",paired=T)
     #samObj = findDAClusters(samObjWithClusters,abundanceType="cRelCloneSize",testType="RankProd",paired=T) # second best option
     #samObj = findDAClusters(samObjWithClusters,abundanceType="cRelCloneSize",testType="t.test",paired=F)
@@ -2498,8 +2526,9 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
     
 
     
-    samObj[4:length(samObj)]
-    
+    saveRDS(samObj[4:length(samObj)], file = paste(forDirName,"/ResampleResult_",i,".rds",sep=""))
+    rm(samObj)
+    i    
   }
   
   
@@ -2511,19 +2540,22 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   # normalize the raw dataset to count per million values (not the resampled data). This counts are to be used for the ranking and filtering steps that follow.
   #repSeqObjWith_decoyCDR3s <- normalizeSamples(repSeqObjWith_decoyCDR3s,totalReads=1e6)
+  # now already done in the setUp function
   
-  for(i in 1:length(samObjResamples)){
+  samObjN <- length(unlist(samObjResamples))
+  for(i in 1:samObjN){
+    samObjResamples <- readRDS(file = paste(forDirName,"/ResampleResult_",i,".rds",sep=""))
     
-    if(item.exists(samObjResamples[[i]],"cDaClusters")){
-      cDaClonotypesList[[i]] <- samObjResamples[[i]]$cDaClonotypes
-      cDaClonotypesWithSubrepertoires <- rbind(cDaClonotypesWithSubrepertoires,cbind(samObjResamples[[i]]$cDaClonotypesWithCluster[,1],paste(samObjResamples[[i]]$cDaClonotypesWithCluster[,2],i,sep="_")))
+    if(item.exists(samObjResamples,"cDaClusters")){
+      cDaClonotypesList[[i]] <- samObjResamples$cDaClonotypes
+      cDaClonotypesWithSubrepertoires <- rbind(cDaClonotypesWithSubrepertoires,cbind(samObjResamples$cDaClonotypesWithCluster[,1],paste(samObjResamples$cDaClonotypesWithCluster[,2],i,sep="_")))
       
-      realToDecoyRates <- c(realToDecoyRates,as.numeric(unlist(samObjResamples[[i]]$realToDecoyRateList)))
+      realToDecoyRates <- c(realToDecoyRates,as.numeric(unlist(samObjResamples$realToDecoyRateList)))
       
       # and add decoys detected in the resample run to the main dataset
-      for(nmm in names(samObjResamples[[i]]$decoyDetectedRecordsList)){
+      for(nmm in names(samObjResamples$decoyDetectedRecordsList)){
         repSeqObjWith_decoyCDR3s$sampleData[[nmm]] <- rbind(repSeqObjWith_decoyCDR3s$sampleData[[nmm]],
-                                                            samObjResamples[[i]]$decoyDetectedRecordsList[[nmm]])
+                                                            samObjResamples$decoyDetectedRecordsList[[nmm]])
       }
       
     }
@@ -2646,14 +2678,19 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   #clonecountM_class = data.frame(clonecountM_class,classes);
   
   nzaf <- ifelse(ncol(clonecountM_class) > 5000,5000,ncol(clonecountM_class))
-  clones.rf <- randomForest(clonecountM_class,classes,ntree=nzaf,importance=TRUE)
+  
+  if("parallelRandomForest" %in% installed.packages()){
+    clones.rf <- parallelRandomForest::randomForest(clonecountM_class,classes,ntree=nzaf,importance=TRUE,nthreads=parallel::detectCores())
+  }else{
+    clones.rf <- randomForest(clonecountM_class,classes,ntree=nzaf,importance=TRUE)
+  }
   
 
   varimp=importance(clones.rf,type=1)
   rfRank <- as.numeric(factor(-varimp[,1]))
   
   
-  fishExactRes <- compareAbundanceInPairedSamplesForRanking(repSeqObjWith_decoyCDR3s,DAClonotypeAbundanceMatrix2_selected,repSeqObjWith_decoyCDR3s$group,paired)
+  fishExactRes <- compareAbundanceInSamplesForRanking(repSeqObjWith_decoyCDR3s,DAClonotypeAbundanceMatrix2_selected,repSeqObjWith_decoyCDR3s$group,paired)
   
   
   # combine rankings
@@ -2680,7 +2717,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   fishExactRes$ntaaRank <- as.numeric(factor(-fishExactRes[,1]))
   fishExactRes$pvalRank <- as.numeric(factor(fishExactRes[,2]))
-  fishExactRes$orRank <- as.numeric(factor(-fishExactRes[,3])) # taking log2 to get symmetric OR values
+  fishExactRes$orRank <- as.numeric(factor(-fishExactRes[,3])) 
   fishExactRes$nSamRank <- as.numeric(factor(-fishExactRes[,4]))
   
   daClonotypesWithRank <- data.frame(DAClonotypeAbundanceMatrix2_selected,subRep_resampleRun,resampleRank,rfRank,ntaaRank=fishExactRes$ntaaRank,fpval=fishExactRes[,2],fPvalRank=fishExactRes$pvalRank,fOr=fishExactRes[,3],fOrRank=fishExactRes$orRank,nSamRank=fishExactRes$nSamRank)
@@ -2751,8 +2788,8 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
 
   # Assessing de-enrichment
   
-  resampleRankDeEn = as.numeric(factor(selected_commDaClones[,1])) #high num of detection in resamples is high rank for enrichment, low is high rank for de-enrichment
-  rfRankDeEn <- as.numeric(factor(varimp[,1])) # high group separation capacity is high rank for enrichment, low group separation capacity is high rank for de-enrichment
+  resampleRankDeEn = resampleRank #high num of detection in resamples is high rank for enrichment, same way for de-enrichment
+  rfRankDeEn <- rfRank # high group separation capacity is high rank for enrichment, same way,high group separation capacity is high rank for de-enrichment
   
   fishExactRes$ntaaRank <- as.numeric(factor(fishExactRes[,1])) # high nt to aa ratio is high rank for enrichment(high rank..1 and close to 1), low nt to aa ratio is high rank for de-enrichment
   fishExactRes$pvalRank <- as.numeric(factor(fishExactRes[,2])) # very low pvalue is ranked highly for both enrichment and de-enrichment
@@ -2761,8 +2798,8 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   
   daClonotypesWithRankDeEn <- data.frame(DAClonotypeAbundanceMatrix2_selected,subRep_resampleRun,resampleRankDeEn,rfRankDeEn,ntaaRank=fishExactRes$ntaaRank,fpval=fishExactRes[,2],fPvalRank=fishExactRes$pvalRank,fOr=fishExactRes[,3],fOrRank=fishExactRes$orRank,nSamRank=fishExactRes$nSamRank)
   
-  r1DeEn <- scaleRank(daClonotypesWithRankDeEn$rfRank)
-  r2DeEn <- scaleRank(daClonotypesWithRankDeEn$resampleRank)
+  r1DeEn <- scaleRank(daClonotypesWithRankDeEn$rfRankDeEn)
+  r2DeEn <- scaleRank(daClonotypesWithRankDeEn$resampleRankDeEn)
   r3DeEn <- scaleRank(daClonotypesWithRankDeEn$fPvalRank)
   r4DeEn <- scaleRank(daClonotypesWithRankDeEn$fOrRank)
   r5DeEn <- scaleRank(daClonotypesWithRankDeEn$ntaaRank)
@@ -2827,26 +2864,26 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,clusterD
   # we are using the formula (#decoy * realToDecRate) /#target, for FDR calculation ... we increase #decoy by realToDecRate since real vs decoy seqs are not even in the original datasets
   #FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) (sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") * realToDecRate) / sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
   FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) ifelse(sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") < realToDecRate, sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy"),realToDecRate * sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy")) / sum(DaClonotypesWithRank.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
-  DaClonotypesWithRank.pvalOrdered$FDRfromDecoy <- FDRfromDecoy
+  DaClonotypesWithRank.pvalOrdered$FDR <- FDRfromDecoy
   
   # The qvalue is the minimal FDR level at which a particular clone can be accepted as a hit
   
-  qvalue <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) min(DaClonotypesWithRank.pvalOrdered[x:nrow(DaClonotypesWithRank.pvalOrdered),]$FDRfromDecoy))
+  qvalue <- sapply(1:nrow(DaClonotypesWithRank.pvalOrdered),function(x) min(DaClonotypesWithRank.pvalOrdered[x:nrow(DaClonotypesWithRank.pvalOrdered),]$FDR))
   DaClonotypesWithRank.pvalOrdered$qvalue <- qvalue
   
   # For de-enrichment
   #FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRankDeEn.pvalOrdered),function(x) (sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") * realToDecRate) / sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
   
   FDRfromDecoy <- sapply(1:nrow(DaClonotypesWithRankDeEn.pvalOrdered),function(x) ifelse(sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy") < realToDecRate, sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy"),realToDecRate * sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Decoy")) / sum(DaClonotypesWithRankDeEn.pvalOrdered[1:x,,drop=FALSE]$RorDecoy=="Real"))
-  DaClonotypesWithRankDeEn.pvalOrdered$FDRfromDecoy <- FDRfromDecoy
+  DaClonotypesWithRankDeEn.pvalOrdered$FDR <- FDRfromDecoy
   
-  qvalue <- sapply(1:nrow(DaClonotypesWithRankDeEn.pvalOrdered),function(x) min(DaClonotypesWithRankDeEn.pvalOrdered[x:nrow(DaClonotypesWithRankDeEn.pvalOrdered),]$FDRfromDecoy))
+  qvalue <- sapply(1:nrow(DaClonotypesWithRankDeEn.pvalOrdered),function(x) min(DaClonotypesWithRankDeEn.pvalOrdered[x:nrow(DaClonotypesWithRankDeEn.pvalOrdered),]$FDR))
   DaClonotypesWithRankDeEn.pvalOrdered$qvalue <- qvalue
   
   
  
   if(returnAll==T){
-    toRet <- list(DaClonotypesWithRank.pvalOrdered,DaClonotypesWithRankDeEn.pvalOrdered,samObjResamples)
+    toRet <- list(DaClonotypesWithRank.pvalOrdered,DaClonotypesWithRankDeEn.pvalOrdered,forDirName)
     names(toRet) <- c("DaClonotypes","DaDeEnClonotypes","nRepeatResults")
   }else{
     toRet <- list(DaClonotypesWithRank.pvalOrdered,DaClonotypesWithRankDeEn.pvalOrdered)
@@ -2885,6 +2922,8 @@ TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05,qValue=0.
     if(nrow(candidateList[[1]]) > 0){
       candidateCDR3s <- candidateList[[1]]
       daCDR3s <- candidateCDR3s[candidateCDR3s$qvalue < qValue & candidateCDR3s$permutedEnPval < pValueCutoff & candidateCDR3s$RorDecoy=="Real",]
+      daCDR3s <- daCDR3s[order(daCDR3s$permutedEnPval,daCDR3s$rpRanks,decreasing=F),]
+      
     }else{
       stop("The list does not contain any candidate CDR3s.")
     }
@@ -2892,7 +2931,7 @@ TopDAClonotypes <- function(candidateList,enriched=T,pValueCutoff=0.05,qValue=0.
     if(nrow(candidateList[[2]]) > 0){
       candidateCDR3s <- candidateList[[2]]
       daCDR3s <- candidateCDR3s[candidateCDR3s$qvalue < qValue & candidateCDR3s$permutedDeEnPval < pValueCutoff & candidateCDR3s$RorDecoy=="Real",]
-
+      daCDR3s <- daCDR3s[order(daCDR3s$permutedDeEnPval,daCDR3s$rpRanks,decreasing=F),]
     }else{
       stop("The list does not contain any candidate CDR3s.")
     }

@@ -23,10 +23,17 @@ loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","
 loadBioconductorPacks <- function(package.list = c("Biostrings","RankProd","preprocessCore","msa","ggseqlogo")){
   new.packages <-package.list[!(package.list %in% installed.packages()[,"Package"])]
   if(length(new.packages)){
-    source("http://bioconductor.org/biocLite.R")
-    biocLite(new.packages)
-  }
+    if(R.Version()[["major"]] >= 3 & unlist(strsplit(R.Version()[["minor"]],"\\."))[1] >= 5){
+      if (!requireNamespace("BiocManager", quietly = TRUE))
+        install.packages("BiocManager")
+      BiocManager::install(new.packages)
+      
+    }else{
+      source("http://bioconductor.org/biocLite.R")
+      biocLite(new.packages)
+    }
   loadSuccess <- lapply(eval(package.list), require, character.only=TRUE,quietly=TRUE)
+  }
 }
 
 
@@ -44,24 +51,27 @@ loadBioconductorPacks <- function(package.list = c("Biostrings","RankProd","prep
 #' 
 #' @param samplename name of the immunoseq formatted repertoire sample (full address or in the working directory)
 #' @param cloneStatus logical; reading only productive or only unproductive CDR3s from the sample; default is productive only
+#' @param filterOutBelowSize1 logical; drop clonotypes with a size of 1, default is true
 #' @return a repseq sample is returned
 #' 
 
-readSample <- function(samplename,cloneStatus="p"){
+readSample <- function(samplename,cloneStatus="p",filterOutBelowSize1=T){
   
   # read sample name and change colnames to uppercase
+  
   sam <- read.table(samplename, header=T, sep="\t",dec = ".",stringsAsFactors=F)
   #sam <- as.data.frame(fread(samplename, header=T, sep="\t",stringsAsFactors=F))
   
   
   colnames(sam) <- toupper(colnames(sam))
   sam <- sam[,which(colnames(sam)=="NUCLEOTIDE"):length(colnames(sam))] # remove unwanted columns that come with some data e.g container etc
-
+  
   # Extract cdr3 sequences and put on one column
   CDR3NT = substring(sam$NUCLEOTIDE,sam$VINDEX+1,sam$VINDEX + sam$CDR3LENGTH)
   sam <- data.frame(sam,CDR3NT,stringsAsFactors=F)
   
   # if there is a column named copy, change it to COUNT
+  
   if(sum(colnames(sam) == "COPY") == 1){
     
     colnames(sam)[which(colnames(sam) == "COPY")] <- "UNNORMALIZEDCOUNT"
@@ -71,7 +81,12 @@ readSample <- function(samplename,cloneStatus="p"){
     
   }
   
+  if(filterOutBelowSize1==T)
+    sam <- sam[sam[,"COUNT"] > 1,]
+  
+  
   # filter sample for only productive or unproductive clonotypes
+  
   if(cloneStatus == "p"){
     sam = getProductive(sam)
   }else if(cloneStatus == "unp"){
@@ -87,17 +102,20 @@ readSample <- function(samplename,cloneStatus="p"){
 #' 
 #' @param samplename name of the immunoseq formatted repertoire sample (full address or in the working directory)
 #' @param cloneStatus logical; reading only productive or only unproductive CDR3s from the sample; default is productive only
+#' @param filterOutBelowSize1 logical; drop clonotypes with a size of 1, default is true
 #' @return a repseq sample is returned
 #' 
 
-readSampleV2 <- function(samplename,cloneStatus="p"){
+readSampleV2 <- function(samplename,cloneStatus="p",filterOutBelowSize1=T){
   
   # read sample name and change colnames to uppercase
   
   #sam <- read.table(samplename, header=T, sep="\t",dec = ".",stringsAsFactors=F)
   #sam <- as.data.frame(fread(samplename, header=T, sep="\t",stringsAsFactors=F,verbose=F,showProgress=F))
   
-  sam <- read.table(samplename, header=T, sep="\t",dec = ".",stringsAsFactors=F)
+  sam <- as.data.frame(fread(samplename, header=T, sep="\t",dec = ".",stringsAsFactors=F))
+  
+  #sam <- read.table(samplename, header=T, sep="\t",dec = ".",stringsAsFactors=F)
   
   colnames(sam) <- toupper(colnames(sam))
   sam <- sam[,which(colnames(sam)=="NUCLEOTIDE"):length(colnames(sam))] # remove unwanted columns that come with some data e.g container etc
@@ -107,14 +125,77 @@ readSampleV2 <- function(samplename,cloneStatus="p"){
   sam <- data.frame(sam,CDR3NT,stringsAsFactors=F)
   
   # if there is a column named copy, change it to COUNT
-    
+  
   colnames(sam)[grep("TEMPLATES",colnames(sam))] <- "COUNT"
   colnames(sam)[grep("FREQUENCYCOUNT",colnames(sam))] <- "FREQUENCYCOUNT"
+  
+  
+  if(filterOutBelowSize1==T)
+    sam <- sam[sam[,"COUNT"] > 1,]
+  
   
   #colnames(sam)[grep("AMINOACID",colnames(sam))] <- "AMINOACID"
   #colnames(sam)[grep("VGENENAME",colnames(sam))] <- "VGENENAME"
   #colnames(sam)[grep("SEQUENCESTATUS",colnames(sam))] <- "SEQUENCESTATUS"
+  
+  # filter sample for only productive or unproductive clonotypes
+  
+  if(cloneStatus == "p"){
+    sam = getProductive(sam)
+  }else if(cloneStatus == "unp"){
+    sam = getUnproductive(sam)
+  }
+  
+  return(sam)
+  
+}
 
+
+#' Read in MiXCR format data and change to Immunoseq format
+#' 
+#' @param samplename name of the MiXCR formatted repertoire sample (full address or in the working directory)
+#' @param cloneStatus logical; reading only productive or only unproductive CDR3s from the sample; default is productive only
+#' @param filterOutBelowSize1 logical; drop clonotypes with a size of 1, default is true
+#' @return a repseq sample is returned
+#' 
+
+readMiXCR <- function(samplename,cloneStatus="p",filterOutBelowSize1=T){
+  
+  # read the file fast, these are big files usually
+  
+  sam <- as.data.frame(data.table::fread(samplename, header=T, dec = ".",stringsAsFactors=F))
+  
+  # we drop clones with size 1 at this point since these data are huge, in addition Immunoseq min clone size is 2.
+  
+  if(filterOutBelowSize1==T)
+    sam <- sam[sam[,"Clone count"] > 1,]
+  
+  
+  sam$CDR3length <- sapply(sam[,"N. Seq. CDR3"],nchar)
+  
+  sam$vgenename <- sapply(sam[,"All V hits"],function(x) unlist(strsplit(unlist(strsplit(x,","))[1],"\\*"))[1])
+  sam$vgenename[is.na(sam$vgenename)] <- "unresolved"
+  
+  sam$dgenename <- sapply(sam[,"All D hits"],function(x) unlist(strsplit(unlist(strsplit(x,","))[1],"\\*"))[1])
+  sam$dgenename[is.na(sam$dgenename)] <- "unresolved"
+  
+  sam$jgenename <- sapply(sam[,"All J hits"],function(x) unlist(strsplit(unlist(strsplit(x,","))[1],"\\*"))[1])
+  sam$jgenename[is.na(sam$jgenename)] <- "unresolved"
+  
+  # continue by figuring out the stop and out of frame clones, then reorder the columns, then name them using immunoseq names.Then return sample
+  #sam[,"AA. Seq. CDR3"]
+  
+  sam$SEQUENCESTATUS <- "In"
+  sam$SEQUENCESTATUS[grep("\\*",sam[,"AA. Seq. CDR3"])] <- "Stop"
+  
+  reOrderColumnsToImmunoseqFormat <- c("Clonal sequence(s)","AA. Seq. CDR3","Clone count",
+                                       "Clone fraction","CDR3length","vgenename","dgenename","jgenename","SEQUENCESTATUS","N. Seq. CDR3") 
+  
+  sam <- sam[,reOrderColumnsToImmunoseqFormat]
+  
+  colnames(sam) <- c("NUCLEOTIDE","AMINOACID","COUNT","FREQUENCYCOUNT","CDR3LENGTH","VGENENAME","DGENENAME","JGENENAME","SEQUENCESTATUS","CDR3NT")
+  colnames(sam) <- toupper(colnames(sam))
+  
   # filter sample for only productive or unproductive clonotypes
   
   if(cloneStatus == "p"){
