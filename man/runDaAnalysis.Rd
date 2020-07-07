@@ -38,8 +38,8 @@ dynamic tree cut to define clusters, if og an in house algorithm will be used th
 
 \item{useProb}{boolean; if true, probabilistic sampling is performed for downsampling with most frequenty CDR3s being more likely to be resampled. If false, all CDR3s have equal chance of being resampled. Default is true.}
 
-\item{returnAll}{boolean; if true, the function returns a list whose first and second elements candidate CDR3s from differentially abundant subrepertoires along with their ranking statistics, the third element contains the directory where all intermediate repeat resample resuls are written. 
-If false, the intermediate results' address is not returned.}
+\item{returnAll}{boolean; if true, the function returns a list whose first and second elements are candidate CDR3s from differentially abundant subrepertoires along with their ranking statistics from enrichment and de-enrichment analyses respectively, the third element contains the directory where all intermediate repeat resample resuls are written. 
+If false, the intermediate results address is not returned.}
 
 \item{nRR}{the number of permutations to perform in the ranking step of candidate DA CDR3s to determine statistical significance.}
 \item{analysisName}{prefix to the directory name in which intermediate results from resample runs will be written.}
