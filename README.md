@@ -24,7 +24,7 @@ devtools::install_github("dyohanne/RepAn",dependencies=F)
 loadPacks()
 loadBioconductorPacks()
 ```
-We recommend the installation of parallelRandomForest to speed up the RandomForest based clonotype ranking task in RepAn, specially for big datasets. Please follow the instruction on (https://bitbucket.org/mkuhn/parallelrandomforest/src/parallelRandomForest/) to install parallelRandomForest or download the source of parallelRandomForest and install locally in R.    
+We recommend the installation of parallelRandomForest to speed up the RandomForest based clonotype ranking task in RepAn, especially for big datasets. Please follow the instruction on (https://bitbucket.org/mkuhn/parallelrandomforest/src/parallelRandomForest/) to install parallelRandomForest or download the source of parallelRandomForest and install locally in R.    
 
 ## Running RepAn
 RepAn is mainly designed to work with genomic TCR repertoire datasets and accepts [immunoseq](https://www.adaptivebiotech.com/immunoseq) formatted datasets. It also accepts MiXCR format data, in which case, if the data comes from cDNA libraries, the analysis can be interpreted as differential expression of TCRs.
