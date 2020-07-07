@@ -64,7 +64,7 @@ names(CDRepseqObj)
 # Names of pre-gluten challenge day 0 samples
 CDRepseqObj$samNames[CDRepseqObj$group==0]
 
-# Names of pre-gluten challenge day 6 samples
+# Names of post-gluten challenge day 6 samples
 CDRepseqObj$samNames[CDRepseqObj$group==1]
 
 # We finally run RepAn DA analysis function on the data with nt 4-mer based clustering, 5 analysis with downsampled repertoire size of 3000 per sample 
