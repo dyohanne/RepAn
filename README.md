@@ -1,7 +1,7 @@
 # RepAn
-Differential Analysis method for deep sequenced TCR immune repertoire (Repseq) datasets in R
+RepAn is an R package that implements a differential abundance analysis method for deep sequenced TCR immune repertoire (Repseq) datasets to identify enriched/expanded clonotypes associated with a condition/disease.
 
-RepAn mainly performs differential abundance analysis to identify condition associated TCR CDR3beta sequences by comparing samples 
+RepAn mainly identifies condition associated TCR CDR3beta sequences by comparing samples 
 in two treatment/condition groups. It uses unsupervised within sample CDR3 clustering to first define clusters of highly similar
 CDR3 sequences, then finds their closest matches across samples. Once matching clusters of CDR3s across samples are found, which are
 referred to as sub-repertoires, it applies statistcal testing to identify diffferentially abundant (DA) sub-repertoires by comparing
