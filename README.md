@@ -54,7 +54,8 @@ repObj <- setUp(sampleNames=samNames,samGroup=c(0,0,0,1,1,1))
 Now we can run differential abundance analysis by passing the Repseq data object to the runDaAnalysis function along with other parameters. Importantly,clusterby="NT" to use nt based 4-mer frequency to represent CDR3 sequences, resampleSize to define the downsampling size (default 5000), repeatResample=T to perform repeat resampling in the analysis, nRepeats the number of repeat resamples, etc. Read the help for runDaAnalysis function for details. The function returns a list with three elements unless returnAll is set to false: the first two elements are data frames of all candidate DA CDR3s along with their abundance in the samples and DA filtering statistics from enrichment and de-enrichment analyses respectively, third element is the address of the intermediate results for the repeat resample runs of the anaysis. 
 
 ```
-results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000)
+results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt=F,
+    distMethod="euclidean",matchingMethod="km",nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000)
 ```
 
 Repseq data object called CDRepseqObj prepared from PBMC TCRB CDR3 repertoire datasets of four celiac disease (CD) patients before and after a 3 day oral gluten challenge is included in RepAn. RepAn also includes data CDGutRepseqObj from CD Gut dataset (n=5) thas has gut biopsy TCR repertoires of celiac disease patients during active disease and after one year long gluten-free diet. We can use CDRepseqObj to find CD associated CDR3 sequences enriched in the repertoires following a 3-day gluten challenge as follows:
@@ -69,7 +70,7 @@ CDRepseqObj$samNames[CDRepseqObj$group==0]
 # Names of post-gluten challenge day 6 samples
 CDRepseqObj$samNames[CDRepseqObj$group==1]
 
-# We finally run RepAn DA analysis function on the data with nt 4-mer based clustering, 5 analysis with downsampled repertoire size of 3000 per sample 
+# We finally run RepAn DA analysis function on the data with nt 4-mer based clustering, 5 analyses with downsampled repertoire size of 3000 per sample 
 results <- runDaAnalysis(CDRepseqObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt=F,
   distMethod="euclidean",matchingMethod="km",nRepeats=5,resampleSize=3000,useProb=T,returnAll=T,nRR=1000)
 ```
