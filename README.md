@@ -55,7 +55,7 @@ Now we can run differential abundance analysis by passing the Repseq data object
 results <- runDaAnalysis(repObj,clusterby="NT",kmerWidth=4,paired=T,clusterDaPcutoff=0.1,positionWt = F,distMethod="euclidean",matchingMethod="km",nRepeats=10,resampleSize=5000,useProb=T,returnAll=T,nRR=1000)
 ```
 
-Repseq data object called CDRepseqObj prepared from PBMC TCRB CDR3 repertoire datasets of four celiac disease (CD) patient before and after a 3 day oral gluten challenge is included in RepAn. RepAn also includes data CDGutRepseqObj from CD Gut dataset (n=5) thas has gut biopsy TCR repertoires of celiac disease patients during active disease and after one year long gluten-free diet. We can use CDRepseqObj to find CD associated CDR3 sequences enriched in the repertoires following a 3-day gluten challenge as follows:
+Repseq data object called CDRepseqObj prepared from PBMC TCRB CDR3 repertoire datasets of four celiac disease (CD) patients before and after a 3 day oral gluten challenge is included in RepAn. RepAn also includes data CDGutRepseqObj from CD Gut dataset (n=5) thas has gut biopsy TCR repertoires of celiac disease patients during active disease and after one year long gluten-free diet. We can use CDRepseqObj to find CD associated CDR3 sequences enriched in the repertoires following a 3-day gluten challenge as follows:
 
 ```
 # Check the members of the CDRepseqObj object
