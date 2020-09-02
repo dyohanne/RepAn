@@ -12,7 +12,7 @@
 loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","cluster","data.table","NbClust","doParallel","dendextend","kmer","ape","Matrix","wordspace","dynamicTreeCut","e1071","fclust","randomForest","preprocessCore","gplots")){
   # other probably needed packages that have been removed for now: "Rclusterpp"
   new.packages <-package.list[!(package.list %in% installed.packages()[,"Package"])]
-  if(length(new.packages)) try(install.packages(new.packages))
+  if(length(new.packages) > 0) try(install.packages(new.packages))
   loadSuccess <- lapply(eval(package.list), require, character.only=TRUE,quietly=TRUE)
 }
 
@@ -22,18 +22,17 @@ loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","
 #' 
 loadBioconductorPacks <- function(package.list = c("Biostrings","RankProd","preprocessCore","msa","ggseqlogo")){
   new.packages <-package.list[!(package.list %in% installed.packages()[,"Package"])]
-  if(length(new.packages)){
+  if(length(new.packages) > 0){
     if(R.Version()[["major"]] >= 3 & unlist(strsplit(R.Version()[["minor"]],"\\."))[1] >= 5){
       if (!requireNamespace("BiocManager", quietly = TRUE))
         install.packages("BiocManager")
-      BiocManager::install(new.packages)
-      
+      BiocManager::install(new.packages)      
     }else{
       source("http://bioconductor.org/biocLite.R")
       biocLite(new.packages)
     }
-  loadSuccess <- lapply(eval(package.list), require, character.only=TRUE,quietly=TRUE)
   }
+  loadSuccess <- lapply(eval(package.list), require, character.only=TRUE,quietly=TRUE)
 }
 
 
