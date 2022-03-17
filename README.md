@@ -8,7 +8,7 @@ referred to as sub-repertoires, it applies statistcal testing to identify difffe
 the abundances of sub-repertoires between condition groups. CDR3 sequences belonging to DA sub-repertoires are collected and 
 put through a ranking based filtering to identify the most likely condition associated CDR3 sequences using permutation to calculate statistical significance of the observed rankings. 
 
-For detailed description of the differential abundance analysis method, please see (https://www.biorxiv.org/content/early/2018/12/07/490102)
+For detailed description of the differential abundance analysis method, please see (https://doi.org/10.1186/s12859-021-04087-7)
 
 ## Installation
 To install RepAn package in R, first install R devtools package and run its install_github function as follows: 
