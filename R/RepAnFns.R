@@ -23,7 +23,7 @@ loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","
 loadBioconductorPacks <- function(package.list = c("Biostrings","RankProd","preprocessCore","msa","ggseqlogo")){
   new.packages <-package.list[!(package.list %in% installed.packages()[,"Package"])]
   if(length(new.packages) > 0){
-    if(R.Version()[["major"]] >= 3 & unlist(strsplit(R.Version()[["minor"]],"\\."))[1] >= 5){
+    if((R.Version()[["major"]] >= 4) | (R.Version()[["major"]] >= 3 & unlist(strsplit(R.Version()[["minor"]],"\\."))[1] >= 5)){
       if (!requireNamespace("BiocManager", quietly = TRUE))
         install.packages("BiocManager")
       BiocManager::install(new.packages)      
