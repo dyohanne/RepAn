@@ -2538,10 +2538,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,minNumPe
   realToDecoyRates <- c()
   cDaClonotypesWithSubrepertoires <- NULL
   
-  # normalize the raw dataset to count per million values (not the resampled data). This counts are to be used for the ranking and filtering steps that follow.
-  #repSeqObjWith_decoyCDR3s <- normalizeSamples(repSeqObjWith_decoyCDR3s,totalReads=1e6)
-  # now already done in the setUp function
-  
+ 
   samObjN <- length(unlist(samObjResamples))
   for(i in 1:samObjN){
     samObjResamples <- readRDS(file = paste(forDirName,"/ResampleResult_",i,".rds",sep=""))
@@ -2618,16 +2615,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,minNumPe
   
   RealAndDecoys <- apply(RealDecoyInformation,1,function(x) ifelse(sum(x=="Real",na.rm=T)>0 ,"Real","Decoy"))
   
-  
-  # # select DA clones that show at least one incidence of increased abundance across the samples
-  # selectedDAClonesIdx <- apply(DAClonotypeAbundanceMatrix2,1,function(x) sum((x[repSeqObj$group == unique(repSeqObj$group)[2]]/x[repSeqObj$group == unique(repSeqObj$group)[1]]) < 1,na.rm=T) == 0)
-  # 
-  # DAClonotypeAbundanceMatrix2_selected <- DAClonotypeAbundanceMatrix2[selectedDAClonesIdx,]
-  # DAClonotypeAbundanceMatrix2_selected <- round(DAClonotypeAbundanceMatrix2_selected,digits=2)
-  # 
-  
-  # decide enriched and de-enriched using the rank, with out selecting for increasing clones as commented above
-  
+   
   DAClonotypeAbundanceMatrix2_selected <- round(DAClonotypeAbundanceMatrix2)
   
   # set clones that exist as real in some samples but decoy in others to zero in the decoy cases; otherwise they make rank calculation of nsamples biased.
@@ -2639,9 +2627,6 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,minNumPe
     DAClonotypeAbundanceMatrix2_selected[idx,][RealDecoyInformation[idx,]=="Decoy"] <- 0
   }
   
-  
-  # MAIN CHANGE HERE:  a cut off of total minimum count of numSamples across samples is used here. The FDR works ok for enrichment always, okish for deenrichment after
-  # this filtering..since most decoys get filtered out at this point. Now run this using many more reference sequences...for all samples.
   
   # remove records that have only counts of 1 or below per sample
   # Then minimum total has to be minimum across samples.
@@ -2740,40 +2725,7 @@ runDaAnalysis <- function(repSeqObj,clusterby="NT",kmerWidth=4,paired=T,minNumPe
   permutedRps <- NULL
   tempdForRandomization <- daClonotypesWithRank[,c("resampleRank","rfRank","ntaaRank","fPvalRank","fOrRank","nSamRank")]
   
-  # for(i in 1:nRR){
-  #   tempdForRandomization <- tempdForRandomization[sample(nrow(tempdForRandomization)),]
-  #   tempdForRandomization <- tempdForRandomization[,sample(ncol(tempdForRandomization))]
-  #   
-  #   r1 <- scaleRank(tempdForRandomization$rfRank)
-  #   r2 <- scaleRank(tempdForRandomization$resampleRank)
-  #   r3 <- scaleRank(tempdForRandomization$fPvalRank)
-  #   r4 <- scaleRank(tempdForRandomization$fOrRank)
-  #   r5 <- scaleRank(tempdForRandomization$ntaaRank)
-  #   r6 <- scaleRank(tempdForRandomization$nSamRank)
-  #   
-  #   rpst <-  r1 + r2 + r3 + r4 + r5 + r6
-  #   permutedRps <- cbind(permutedRps,rpst)
-  #   
-  # }
-  #
-  
-  # permutedEnPval <- c()
-  # for(i in 1:length(rps)){
-  #   
-  #   permutedEnPval <- c(permutedEnPval,sum(permutedRps[i,] <= rps[i]) / length(permutedRps[i,]) )
-  #   
-  # }
-  # 
-  
-  # permutedDeEnPval <- c()
-  # for(i in 1:length(rps)){
-  #   
-  #   permutedDeEnPval <- c(permutedDeEnPval,sum(permutedRps[i,] >= rps[i]) / length(permutedRps[i,]) )
-  #   
-  # }
-  # 
-  # 
-  
+ 
   permutedRps <- lapply(1:nRR,function(x) workWithPermMatrices(tempdForRandomization[sample(nrow(tempdForRandomization)),sample(ncol(tempdForRandomization))]))
   
   
