@@ -24,7 +24,6 @@ Depends:
     preprocessCore (>= 1.32.0),
     randomForest (>= 4.6-12),
     gplots (>= 3.0.1),
-    wordspace (>= 0.2-0),
     e1071 (>= 1.6-7),
     data.table (>= 1.9.6),
     gplots (>= 3.0.1),
