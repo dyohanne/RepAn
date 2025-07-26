@@ -11,16 +11,9 @@ put through a ranking based filtering to identify the most likely condition asso
 For detailed description of the differential abundance analysis method, please see (https://doi.org/10.1186/s12859-021-04087-7)
 
 ## Installation
-To install RepAn package in R, first install R devtools package and run its install_github function as follows: 
-
+To install RepAn package in R, first install RepAn from the development branch without the dependencies and use the package installation functions that come with RepAn as follows:
 ```
-install.packages("devtools")
-devtools::install_github("dyohanne/RepAn")
-```
-If installing R package dependencies with the previous command gives errors, first install RepAn without the dependencies and use the package installation functions that come with RepAn as follows:
-
-```
-devtools::install_github("dyohanne/RepAn",dependencies=F)
+devtools::install_github("dyohanne/RepAn@development", dependencies = FALSE, upgrade = "never")
 loadPacks()
 loadBioconductorPacks()
 ```
