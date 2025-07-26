@@ -9,7 +9,7 @@
 #' 
 #' @param package.list vector of packages
 #' 
-loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","cluster","data.table","NbClust","doParallel","dendextend","kmer","ape","Matrix","wordspace","dynamicTreeCut","e1071","fclust","randomForest","preprocessCore","gplots")){
+loadPacks <- function(package.list = c("ggplot2","seqRFLP","stringr","permute","cluster","data.table","NbClust","doParallel","dendextend","kmer","ape","Matrix","dynamicTreeCut","e1071","fclust","randomForest","preprocessCore","gplots")){
   # other probably needed packages that have been removed for now: "Rclusterpp"
   new.packages <-package.list[!(package.list %in% installed.packages()[,"Package"])]
   if(length(new.packages) > 0) try(install.packages(new.packages))
