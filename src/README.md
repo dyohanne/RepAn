@@ -126,7 +126,7 @@ library(Matrix)
 x <- sparseMatrix(i=c(1,1,2), j=c(1,2,2), x=c(1,2,3), dims=c(2,3))
 clslabels <- c(1, 1)
 
-# Should run without error
+# Call R wrapper function which internally calls C++ fastGetCenters()
 centers <- fastCenters(x, clslabels)
 print(centers)
 ```

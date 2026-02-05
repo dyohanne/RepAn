@@ -1,5 +1,3 @@
-context("C++ Optimization Functions")
-
 test_that("fastGetCenters computes correct centroids", {
   skip_if_not_installed("Rcpp")
   skip_if_not_installed("Matrix")
