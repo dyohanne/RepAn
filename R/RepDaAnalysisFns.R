@@ -390,14 +390,14 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   
   if(posWt==T){
     
-    cat("\t...calculating positional weights for kmer frequencies \n")
+    cat("\t...calculating positional weights for kmer frequencies (using C++) \n")
     
-    # give position based weights to kmers, and normalize kmer frequence matrix
+    # Use fast C++ implementation for positional weights
     weighted.seq.mers = NULL
     
     for(seq in seqs){
-      
-      kmerWeights = sapply(kmers,function(x) determineWeight(x,as.character(seq))) 
+      # Use C++ vectorized weight calculation
+      kmerWeights = fastDetermineWeightsVector(kmers, as.character(seq)) 
       weighted.seq.mers = rbind(weighted.seq.mers,kmerWeights)  
     }
     
@@ -418,6 +418,7 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   
   
   #dcalculated <- dist(seq_mers)
+  # Use fclust dist.matrix which is already optimized
   dcalculated <- dist.matrix(seq_mers, method=distMethod, convert=T, as.dist=TRUE)
   #dcalculated <- dist.matrix(seq_mers, method="cosine", convert=T, as.dist=TRUE)
   
@@ -437,7 +438,9 @@ getClusterLables <- function(sam,k=10,clusterby="NT",kmerWidth=4,posWt=F,distMet
   
 
  
-  clsCenters <- getCenters(seq_mers,cls)
+  # Use fast C++ centroid calculation
+  clsCenters <- fastCenters(seq_mers, cls)
+  #clsCenters <- getCenters(seq_mers,cls)
   #distanceAndClusters <- list(seqs=as.character(seqs),seqmers=seq_mers,distmatrix=as.matrix(dcalculated),clusters=cls,clusterCenters=clsCenters)
   
   # without returning the distance matrix
@@ -589,6 +592,7 @@ findOptimalK <- function(repSeqObj,nSamEval=2,clusterby,minCSizePerc = 0.1,minNC
      
        
       seqmersResampled <- seq_mers
+      # Keep using dist.matrix from fclust which is already optimized
       dcalculated <- dist.matrix(seqmersResampled, method=distMethod, convert=T, as.dist=TRUE)
         
       hc<-hclust(dcalculated,method="complete") 
@@ -1097,6 +1101,7 @@ getClusterMatches<- function(repSeqObj,matchingMethod=c("hc","km","og"),distMeth
     }else if(matchingMethod == "hc"){
       
       centroidKmcls <- list()
+      # Keep using dist.matrix from fclust which is already optimized
       dcalc1= dist.matrix(combinedCentroids, method=distMethod, convert=T, as.dist=TRUE)
       
       hc<-hclust(dcalc1,method="complete")
