@@ -1,1 +1,3 @@
 ^data-raw$
+^benchmark_test\.R$
+^test_cpp_compilation\.R$
